@@ -1,0 +1,5 @@
+public/**
+node_modules/**
+build/esbuild.js
+dist/**
+dist-test/**

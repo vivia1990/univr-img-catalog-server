@@ -1,0 +1,30 @@
+{
+  "name": "mongo",
+  "version": "1.0.0",
+  "main": "server/server.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn tsc -p ./tsconfig.json",
+    "test": "yarn tsc -p ./test/tsconfig.json"
+  },
+  "type": "module",
+  "dependencies": {
+    "module-alias": "^2.2.3",
+    "mongodb": "6.3",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "esbuild": "^0.19.10",
+    "eslint": "^8.56.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.5.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "_moduleAliases": {
+    "app": "server"
+  }
+}
