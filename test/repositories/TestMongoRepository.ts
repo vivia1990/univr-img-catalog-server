@@ -15,15 +15,15 @@ const connection = await Promise.race([
 
 const user = new User('Mich', 'donvivia@gmail.com', 'aaa');
 
-const repo = new MongoFactory(connection).createModelRepo<User>(user);
+const repo = new MongoFactory(connection).createModelRepo<User>(User.tableName);
 
-async function cleanUserCollection (user: User) {
-    await connection.db.dropCollection(user.getTableName()).catch(error => { throw error; });
-    await connection.db.collection<User>(user.getTableName()).createIndex({ email: 1 }, { unique: true });
+async function cleanUserCollection () {
+    await connection.db.dropCollection(User.tableName).catch(error => { throw error; });
+    await connection.db.collection<User>(User.tableName).createIndex({ email: 1 }, { unique: true });
 }
 
 test('MongoRepository', async () => {
-    await cleanUserCollection(user);
+    await cleanUserCollection();
     await it('Insert one', async t => {
 
         await t.test('Insert one user', () => repo.insert(user).then(data => {
@@ -46,7 +46,7 @@ test('MongoRepository', async () => {
         Promise.reject(error);
     });
 
-    await cleanUserCollection(user);
+    await cleanUserCollection();
     await it('Insert Many', async t => {
         const length = 50;
         const users = createMultipleRandomUser(length);
@@ -109,7 +109,7 @@ test('MongoRepository', async () => {
 
     });
 
-    await cleanUserCollection(user);
+    await cleanUserCollection();
     await it('Delete one', async t => {
         await t.test('Delete existing record', async () => {
             const data = await repo.insert(user);

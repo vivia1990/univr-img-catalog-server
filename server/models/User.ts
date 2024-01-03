@@ -1,5 +1,7 @@
-export class User {
-    private static readonly tableName = 'user';
+import { Model } from '../repositories/factory/ModelRepository.js';
+
+export class User implements Model {
+    public static readonly tableName = 'user';
     constructor (
         public name: string,
         public email: string,
