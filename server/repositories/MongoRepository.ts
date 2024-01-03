@@ -4,7 +4,7 @@ import { Db, ObjectId, Filter, InsertOneResult, Document, InferIdType, Collectio
 import { BaseRepository, ModelWithId, InsertedMany } from './factory/ModelRepository.js';
 import Mongo from '../db/Mongo.js';
 
-export class MongoRepository<T extends Document> implements BaseRepository<T, '_id', InferIdType<T>> {
+export default class MongoRepository<T extends Document> implements BaseRepository<T, '_id', InferIdType<T>> {
     private db: Db;
     protected collection: Collection<T>;
     protected collectionName: string;
@@ -82,11 +82,21 @@ export class MongoRepository<T extends Document> implements BaseRepository<T, '_
             .catch(error => (new Error(error.message || 'Delete failed')));
     }
 
-    find (item: Partial<T>): Promise<ModelWithId<T, '_id', InferIdType<T>> | null> {
-        return this.collection.findOne(item as any);
+    deleteMany (item: Filter<T>): Promise<number | Error> {
+        return this.collection.deleteMany(item).then(result => {
+            if (result.deletedCount) {
+                return result.deletedCount;
+            }
+
+            throw new Error('Record non cancellati');
+        });
     }
 
-    findAll (item: Partial<T>): Promise<ModelWithId<T, '_id', InferIdType<T>>[]> {
-        return this.collection.find(item as any).toArray();
+    find (item: Filter<T>): Promise<ModelWithId<T, '_id', InferIdType<T>> | null> {
+        return this.collection.findOne(item);
+    }
+
+    findAll (item: Filter<T>): Promise<ModelWithId<T, '_id', InferIdType<T>>[]> {
+        return this.collection.find(item).toArray();
     }
 }
