@@ -1,7 +1,12 @@
 export type ModelWithId<T, ID extends string, TYPE extends object> = Omit<T, ID> & { [key in ID]: TYPE };
 
+export type InsertedMany<T, IDKEY extends string, IDTYPE extends object> = {
+    inserted: ModelWithId<T, IDKEY, IDTYPE>[];
+    failed: T[];
+};
 export interface Writer<T, IDKEY extends string, IDTYPE extends object> {
-    create(item: T): Promise<ModelWithId<T, IDKEY, IDTYPE>>;
+    insert(item: T): Promise<ModelWithId<T, IDKEY, IDTYPE>>;
+    insertMany(items: T[]): Promise<InsertedMany<T, IDKEY, IDTYPE>>;
     updateById(id: string, item: Partial<T>): Promise<boolean | Error>;
     deleteById(id: string): Promise<boolean | Error>;
 }

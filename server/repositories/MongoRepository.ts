@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // todo pensare a fix
-import { Db, ObjectId, Filter, InsertOneResult, Document, InferIdType, Collection } from 'mongodb';
-import { BaseRepository, ModelWithId } from './factory/ModelRepository.js';
+import { Db, ObjectId, Filter, InsertOneResult, Document, InferIdType, Collection, InsertManyResult, MongoBulkWriteError } from 'mongodb';
+import { BaseRepository, ModelWithId, InsertedMany } from './factory/ModelRepository.js';
 import Mongo from '../db/Mongo.js';
 
 export class MongoRepository<T extends Document> implements BaseRepository<T, '_id', InferIdType<T>> {
@@ -15,14 +15,44 @@ export class MongoRepository<T extends Document> implements BaseRepository<T, '_
         this.collection = this.db.collection<T>(collectionName);
     }
 
-    async create (item: T): Promise<ModelWithId<T, '_id', InferIdType<T>>> {
+    insert (item: T): Promise<ModelWithId<T, '_id', InferIdType<T>>> {
         const fields: T = { created_at: new Date(), updated_at: null, ...item };
         return this.collection.insertOne(fields as any)
-            .then((result: InsertOneResult<T>) => {
-                console.log(result.insertedId);
-                return (
+            .then((result: InsertOneResult<T>) => (
                     { ...{ _id: result.insertedId }, ...fields } as ModelWithId<T, '_id', InferIdType<T>>
-                );
+            ));
+    }
+
+    private mapData (insertIds: {[key: number]: InferIdType<T>}, items: T[]) {
+        return Object.values(insertIds)
+            .map(
+                (id, index) => ({ ...{ _id: id }, ...items[index] }) as ModelWithId<T, '_id', InferIdType<T>>
+            );
+    }
+
+    insertMany (items: T[]): Promise<InsertedMany<T, '_id', InferIdType<T>>> {
+        const length = items.length;
+        const records: T[] = items.map(item => ({ created_at: new Date(), updated_at: null, ...item }));
+
+        return this.collection.insertMany(records as any)
+            .then((result: InsertManyResult<T>) => {
+                if (result.insertedCount !== length) {
+                    throw new Error(`Errore inserimento, inseriti ${result.insertedCount}`);
+                }
+
+                return {
+                    inserted: this.mapData(result.insertedIds, records),
+                    failed: []
+                };
+            }).catch(error => {
+                if (!(error instanceof MongoBulkWriteError)) {
+                    throw error;
+                }
+
+                return {
+                    inserted: this.mapData(error.insertedIds, records),
+                    failed: items.slice(error.insertedCount)
+                };
             });
     }
 
