@@ -1,5 +1,5 @@
 /* eslint-disable padded-blocks */
-import { describe, it } from 'node:test';
+import { test, it } from 'node:test';
 import assert from 'node:assert';
 import { User } from '../../server/models/User.js';
 import Connection from '../../server/db/Mongo.js';
@@ -22,7 +22,7 @@ async function cleanUserCollection (user: User) {
     await connection.db.collection<User>(user.getTableName()).createIndex({ email: 1 }, { unique: true });
 }
 
-describe('MongoRepository', async () => {
+test('MongoRepository', async () => {
     await cleanUserCollection(user);
     await it('Insert one', async t => {
 
@@ -46,6 +46,7 @@ describe('MongoRepository', async () => {
         Promise.reject(error);
     });
 
+    await cleanUserCollection(user);
     await it('Insert Many', async t => {
         const length = 50;
         const users = createMultipleRandomUser(length);
@@ -64,7 +65,7 @@ describe('MongoRepository', async () => {
                 });
             }).catch(error => { throw error; }));
 
-        const arr = [user, new User('aaa', users[0]?.email || '', 'bbb')];
+        const arr = [new User('aaa', users[0]?.email || '', 'bbb'), user];
         await t.test('Insert users same email', () => repo.insertMany(arr)
             .then(data => {
                 assert.strictEqual(data.inserted.length, 0);
@@ -106,9 +107,23 @@ describe('MongoRepository', async () => {
                 assert.notEqual((error as MongoServerError).code, 11000);
             }));
 
-    }).catch(error => {
-        console.error(error);
-        Promise.reject(error);
+    });
+
+    await cleanUserCollection(user);
+    await it('Delete one', async t => {
+        await t.test('Delete existing record', async () => {
+            const data = await repo.insert(user);
+            assert.equal(await repo.deleteById(data._id.toString()), true);
+        });
+
+        await t.test('Delete existing records', async () => {
+            const length = 50;
+            const users = createMultipleRandomUser(length);
+            await repo.insertMany(users);
+            const result = await repo.deleteMany({ _id: { $exists: true } });
+            assert.equal(result, length);
+        });
+
     });
 
 }).finally(() => connection.getConnection().close());
