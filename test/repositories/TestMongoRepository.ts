@@ -3,9 +3,10 @@ import { test, it } from 'node:test';
 import assert from 'node:assert';
 import { User } from '../../server/models/User.js';
 import Connection from '../../server/db/Mongo.js';
-import MongoFactory from '../../server/repositories/factory/MongoFactory.js';
+import UserFactory from '../../server/repositories/factory/mongo/UserFactory.js';
 import { createMultipleRandomUser, createRandomUser } from '../models/fake/User.js';
 import { MongoServerError } from 'mongodb';
+import UserRepository from 'app/repositories/mongo/UserRepository.js';
 
 const connection = await Promise.race([
     new Connection('mongodb://root:root@192.168.1.253:27017/', 'test')
@@ -15,7 +16,8 @@ const connection = await Promise.race([
 
 const user = new User('Mich', 'donvivia@gmail.com', 'aaa');
 
-const repo = new MongoFactory(connection).createModelRepo<User>(User.tableName);
+const repo = new UserFactory(connection)
+    .createModelRepo() as UserRepository;
 
 async function cleanUserCollection () {
     await connection.db.dropCollection(User.tableName).catch(error => { throw error; });

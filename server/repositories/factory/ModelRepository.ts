@@ -27,6 +27,6 @@ export interface Model {
     getTableName(): string;
 }
 
-export default abstract class ModelRepository<IDKEY extends string> {
-    abstract createModelRepo<T extends Model>(model: string): BaseRepository<T, IDKEY, object>;
+export default abstract class ModelRepository<T, IDKEY extends string> {
+    abstract createModelRepo(): BaseRepository<T, IDKEY, object>;
 }
