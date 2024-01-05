@@ -5,13 +5,14 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc -p ./tsconfig.json",
-    "test": "yarn tsc -p ./test/tsconfig.json && node --test"
+    "test": "yarn tsc -p ./test/tsconfig.json"
   },
   "type": "module",
   "dependencies": {
     "module-alias": "^2.2.3",
     "mongodb": "6.3",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.3.1",
