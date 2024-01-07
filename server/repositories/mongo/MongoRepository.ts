@@ -2,7 +2,7 @@
 // todo pensare a fix
 import { Db, ObjectId, Filter, InsertOneResult, Document, InferIdType, Collection, InsertManyResult, MongoBulkWriteError } from 'mongodb';
 import { BaseRepository, ModelWithId, InsertedMany } from '../factory/ModelRepository.js';
-import Mongo from '../../db/Mongo.js';
+import Mongo from '../../db/drivers/Mongo.js';
 
 export default class MongoRepository<T extends Document> implements BaseRepository<T, '_id', InferIdType<T>> {
     private db: Db;

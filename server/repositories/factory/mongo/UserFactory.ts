@@ -1,4 +1,4 @@
-import Mongo from '../../../db/Mongo.js';
+import Mongo from '../../../db/drivers/Mongo.js';
 import MongoFactory from './MongoFactory.js';
 import UserRepository from '../../mongo/UserRepository.js';
 import { User } from '../../../models/User.js';

@@ -1,7 +1,7 @@
 import { Document, InferIdType } from 'mongodb';
 import ModelRepository, { BaseRepository } from '../ModelRepository.js';
 import MongoRepository from '../../mongo/MongoRepository.js';
-import Mongo from '../../../db/Mongo.js';
+import Mongo from '../../../db/drivers/Mongo.js';
 
 export default class MongoFactory<T extends Document> extends ModelRepository<T, '_id'> {
     protected readonly client: Mongo;
