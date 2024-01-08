@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc -p ./tsconfig.json",
-    "test": "yarn tsc -p ./test/tsconfig.json"
+    "test": "yarn tsc -p ./test/tsconfig.json",
+    "express": "yarn build && node --env-file=.env dist/server/server.js"
   },
   "type": "module",
   "dependencies": {
@@ -14,6 +15,7 @@
     "module-alias": "^2.2.3",
     "mongodb": "6.3",
     "typescript": "^5.3.3",
+    "yarn": "^1.22.21",
     "zod": "^3.22.4"
   },
   "devDependencies": {

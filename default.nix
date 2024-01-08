@@ -2,9 +2,14 @@
 
 pkgs.mkShell {
 
-  buildInputs = [ pkgs.nodejs_21 pkgs.yarn ];
+  buildInputs = [ pkgs.nodejs_21 ];  
 
-  shellHook = ''
-    echo "Entering the Nix shell with java version: ${pkgs.jdk21.version}"
+  TZDIR = "/usr/share/zoneinfo/";
+  TZ = "Europe/Rome";
+  LANG = "en_US.UTF-8";
+
+  shellHook = ''    
+    echo "NodeJS 21"
+    export PATH="./node_modules/.bin:$PATH"
   '';
 }
