@@ -92,6 +92,10 @@ export default class MongoRepository<T extends Document> implements BaseReposito
         });
     }
 
+    findById (id: string): Promise<ModelWithId<T, '_id', InferIdType<T>> | null> {
+        return this.collection.findOne({ _id: new ObjectId(id) } as Filter<T>);
+    }
+
     find (item: Filter<T>): Promise<ModelWithId<T, '_id', InferIdType<T>> | null> {
         return this.collection.findOne(item);
     }

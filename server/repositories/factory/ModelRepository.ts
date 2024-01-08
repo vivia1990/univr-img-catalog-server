@@ -18,13 +18,17 @@ export interface Writer<T, IDKEY extends string, IDTYPE extends object> {
 
 export interface Reader<T, IDKEY extends string, IDTYPE extends object> {
     find(item: unknown): Promise<ModelWithId<T, IDKEY, IDTYPE> | null>;
+    findById(id: string): Promise<ModelWithId<T, IDKEY, IDTYPE> | null>;
     findAll(item: unknown): Promise<ModelWithId<T, IDKEY, IDTYPE>[]>;
 }
+
+export type PropertiesOnly<T> = Pick<T, { [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? never : K }[keyof T]>;
 
 export type BaseRepository<T, IDKEY extends string, IDTYPE extends object> = Writer<T, IDKEY, IDTYPE> & Reader<T, IDKEY, IDTYPE>;
 
 export interface Model {
     getTableName(): string;
+    validate(): unknown
 }
 
 export default abstract class ModelRepository<T, IDKEY extends string> {
