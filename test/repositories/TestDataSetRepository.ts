@@ -31,7 +31,7 @@ test('DataSetRepository', async () => {
     await it('Insert one', async t => {
         const user = await userRepo.insert(createRandomUser());
 
-        const ds = new DataSet('dataset-1', user._id.toString(), { count: 20, validated: 0 });
+        const ds = new DataSet('dataset-1', user._id, { count: 20, validated: 0 });
         await t.test('User datasets', async () => {
             const dsData = await repo.insert(ds)
                 .then(data => {
@@ -43,6 +43,7 @@ test('DataSetRepository', async () => {
                 user._id.toString(), { datasets: [dsData._id.toString()] });
 
             await userRepo.find({ _id: user._id }).then(data => {
+                console.log(Object.getPrototypeOf(data?._id));
                 if (data) {
                     assert.deepEqual(data.datasets, [dsData._id.toString()]);
                 } else {
