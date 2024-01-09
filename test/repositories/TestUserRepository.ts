@@ -3,10 +3,9 @@ import { test, it } from 'node:test';
 import assert from 'node:assert';
 import { User } from '../../server/models/User.js';
 import MongoConnection from '../../server/db/MongoConnection.js';
-import UserFactory from '../../server/repositories/factory/mongo/UserFactory.js';
+import MongoFactory from '../../server/repositories/factory/mongo/MongoFactory.js';
 import { createRandomUser } from '../models/fake/User.js';
 import { env } from '../../server/env.js';
-import UserRepository from 'app/repositories/mongo/UserRepository.js';
 
 MongoConnection.setConnectionParams({
     name: env.DB_NAME,
@@ -15,8 +14,8 @@ MongoConnection.setConnectionParams({
     port: env.DB_PORT,
     user: env.DB_USER
 });
-const repo = new UserFactory(await MongoConnection.getConnection())
-    .createModelRepo() as UserRepository;
+const repo = new MongoFactory(await MongoConnection.getConnection())
+    .createUserRepo();
 
 async function cleanUserCollection () {
     const connection = await MongoConnection.getConnection();

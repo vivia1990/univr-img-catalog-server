@@ -1,23 +1,17 @@
+import { ObjectId } from 'mongodb';
 import Mongo from '../../db/drivers/Mongo.js';
+import { User } from '../../models/User.js';
+import { ModelWithId } from '../interfaces/BaseRepository.js';
 import MongoRepository from './MongoRepository.js';
-import MongoFactory from '../factory/mongo/MongoFactory.js';
-
-import { InferIdType } from 'mongodb';
-import { BaseRepository, PropertiesOnly } from '../factory/ModelRepository.js';
 import DataSet from '../../models/DataSet.js';
+import { IDataSetRepository } from '../interfaces/DataSetRepository.js';
 
-export class DataSetRepository extends MongoRepository<PropertiesOnly<DataSet>> {
+export default class DataSetRepository extends MongoRepository<DataSet> implements IDataSetRepository<'_id', ObjectId> {
     constructor (mongoDatabase: Mongo) {
         super(mongoDatabase, DataSet.tableName);
     }
-}
 
-export default class DataSetFactory extends MongoFactory<PropertiesOnly<DataSet>> {
-    constructor (client: Mongo) {
-        super(client, DataSet.tableName);
-    }
-
-    createModelRepo (): BaseRepository<PropertiesOnly<DataSet>, '_id', InferIdType<DataSet>> {
-        return new DataSetRepository(this.client);
+    users (): Promise<ModelWithId<User, '_id', ObjectId>[]> {
+        throw new Error('Method not implemented.');
     }
 }

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // todo pensare a fix
-import { Db, ObjectId, Filter, InsertOneResult, Document, InferIdType, Collection, InsertManyResult, MongoBulkWriteError } from 'mongodb';
-import { BaseRepository, ModelWithId, InsertedMany } from '../factory/ModelRepository.js';
+import { Db, ObjectId, Filter, InsertOneResult, Document, Collection, InsertManyResult, MongoBulkWriteError } from 'mongodb';
+import { BaseRepository, ModelWithId, InsertedMany } from '../interfaces/BaseRepository.js';
 import Mongo from '../../db/drivers/Mongo.js';
 
-export default class MongoRepository<T extends Document> implements BaseRepository<T, '_id', InferIdType<T>> {
+export default class MongoRepository<T extends Document> implements BaseRepository<T, '_id', ObjectId> {
     private db: Db;
     protected collection: Collection<T>;
     protected collectionName: string;
@@ -15,22 +15,22 @@ export default class MongoRepository<T extends Document> implements BaseReposito
         this.collection = this.db.collection<T>(collectionName);
     }
 
-    insert (item: T): Promise<ModelWithId<T, '_id', InferIdType<T>>> {
+    insert (item: T): Promise<ModelWithId<T, '_id', ObjectId>> {
         const fields: T = { created_at: new Date(), updated_at: null, ...item };
         return this.collection.insertOne(fields as any)
             .then((result: InsertOneResult<T>) => (
-                    { ...{ _id: result.insertedId }, ...fields } as ModelWithId<T, '_id', InferIdType<T>>
+                    { ...{ _id: result.insertedId }, ...fields } as ModelWithId<T, '_id', ObjectId>
             ));
     }
 
-    private mapData (insertIds: {[key: number]: InferIdType<T>}, items: T[]) {
+    private mapData (insertIds: {[key: number]: ObjectId}, items: T[]) {
         return Object.values(insertIds)
             .map(
-                (id, index) => ({ ...{ _id: id }, ...items[index] }) as ModelWithId<T, '_id', InferIdType<T>>
+                (id, index) => ({ ...{ _id: id }, ...items[index] }) as ModelWithId<T, '_id', ObjectId>
             );
     }
 
-    insertMany (items: T[]): Promise<InsertedMany<T, '_id', InferIdType<T>>> {
+    insertMany (items: T[]): Promise<InsertedMany<T, '_id', ObjectId>> {
         const length = items.length;
         const records: T[] = items.map(item => ({ created_at: new Date(), updated_at: null, ...item }));
 
@@ -92,15 +92,15 @@ export default class MongoRepository<T extends Document> implements BaseReposito
         });
     }
 
-    findById (id: string): Promise<ModelWithId<T, '_id', InferIdType<T>> | null> {
+    findById (id: string): Promise<ModelWithId<T, '_id', ObjectId> | null> {
         return this.collection.findOne({ _id: new ObjectId(id) } as Filter<T>);
     }
 
-    find (item: Filter<T>): Promise<ModelWithId<T, '_id', InferIdType<T>> | null> {
+    find (item: Filter<T>): Promise<ModelWithId<T, '_id', ObjectId> | null> {
         return this.collection.findOne(item);
     }
 
-    findAll (item: Filter<T>): Promise<ModelWithId<T, '_id', InferIdType<T>>[]> {
+    findAll (item: Filter<T>): Promise<ModelWithId<T, '_id', ObjectId>[]> {
         return this.collection.find(item).toArray();
     }
 }

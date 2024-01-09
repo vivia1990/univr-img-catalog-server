@@ -4,10 +4,9 @@ import assert from 'node:assert';
 import { env } from '../../server/env.js';
 import { User } from '../../server/models/User.js';
 import MongoConnection from '../../server/db/MongoConnection.js';
-import UserFactory from '../../server/repositories/factory/mongo/UserFactory.js';
+import MongoFactory from '../../server/repositories/factory/mongo/MongoFactory.js';
 import { createMultipleRandomUser, createRandomUser } from '../models/fake/User.js';
 import { MongoServerError } from 'mongodb';
-import UserRepository from 'app/repositories/mongo/UserRepository.js';
 
 const user = new User('Mich', 'donvivia@gmail.com', 'aaa');
 
@@ -18,8 +17,8 @@ MongoConnection.setConnectionParams({
     port: env.DB_PORT,
     user: env.DB_USER
 });
-const repo = new UserFactory(await MongoConnection.getConnection())
-    .createModelRepo() as UserRepository;
+const factory = new MongoFactory(await MongoConnection.getConnection());
+const repo = factory.createUserRepo();
 
 async function cleanUserCollection () {
     const connection = await MongoConnection.getConnection();

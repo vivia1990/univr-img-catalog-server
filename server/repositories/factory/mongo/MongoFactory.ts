@@ -1,18 +1,28 @@
-import { Document, InferIdType } from 'mongodb';
-import ModelRepository, { BaseRepository } from '../ModelRepository.js';
+import { Document, ObjectId } from 'mongodb';
+import { BaseRepository } from '../../interfaces/BaseRepository.js';
 import MongoRepository from '../../mongo/MongoRepository.js';
 import Mongo from '../../../db/drivers/Mongo.js';
+import { DBFactory } from '../../interfaces/DBFactory.js';
+import { IDataSetRepository } from '../../interfaces/DataSetRepository.js';
+import { IUserRepository } from '../../interfaces/UserRepository.js';
+import UserRepository from '../../mongo/UserRepository.js';
+import DataSetRepository from '../../mongo/DataSetRepository.js';
 
-export default class MongoFactory<T extends Document> extends ModelRepository<T, '_id'> {
+export default class MongoFactory implements DBFactory<'_id', ObjectId> {
     protected readonly client: Mongo;
-    protected readonly collection: string;
-    constructor (client: Mongo, collection: string) {
-        super();
+    constructor (client: Mongo) {
         this.client = client;
-        this.collection = collection;
     }
 
-    createModelRepo (): BaseRepository<T, '_id', InferIdType<T>> {
-        return new MongoRepository<T>(this.client, this.collection);
+    createUserRepo (): IUserRepository<'_id', ObjectId> {
+        return new UserRepository(this.client);
+    }
+
+    createDataSetRepo (): IDataSetRepository<'_id', ObjectId> {
+        return new DataSetRepository(this.client);
+    }
+
+    createModelRepo<T extends Document> (table: string): BaseRepository<T, '_id', ObjectId> {
+        return new MongoRepository<T>(this.client, table);
     }
 }

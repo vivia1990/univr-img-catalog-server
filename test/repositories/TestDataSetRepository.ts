@@ -1,9 +1,8 @@
 /* eslint-disable padded-blocks */
 import { test, it } from 'node:test';
 import assert from 'node:assert';
-import UserFactory from '../../server/repositories/factory/mongo/UserFactory.js';
+import MongoFactory from '../../server/repositories/factory/mongo/MongoFactory.js';
 import MongoConnection from '../../server/db/MongoConnection.js';
-import DataSetFactory, { DataSetRepository } from '../../server/repositories/mongo/DataSetRepository.js';
 import { createRandomUser } from '../models/fake/User.js';
 import { env } from '../../server/env.js';
 import DataSet from '../../server/models/DataSet.js';
@@ -15,11 +14,10 @@ MongoConnection.setConnectionParams({
     port: env.DB_PORT,
     user: env.DB_USER
 });
-const repo = new DataSetFactory(await MongoConnection.getConnection())
-    .createModelRepo() as DataSetRepository;
+const factory = new MongoFactory(await MongoConnection.getConnection());
+const dsRepo = factory.createDataSetRepo();
 
-const userRepo = new UserFactory(await MongoConnection.getConnection())
-    .createModelRepo();
+const userRepo = factory.createUserRepo();
 
 async function cleanDataSetCollection () {
     const connection = await MongoConnection.getConnection();
@@ -33,7 +31,7 @@ test('DataSetRepository', async () => {
 
         const ds = new DataSet('dataset-1', user._id, { count: 20, validated: 0 });
         await t.test('User datasets', async () => {
-            const dsData = await repo.insert(ds)
+            const dsData = await dsRepo.insert(ds)
                 .then(data => {
                     assert.deepEqual(ds.owner, data.owner);
                     return data;
@@ -43,7 +41,6 @@ test('DataSetRepository', async () => {
                 user._id.toString(), { datasets: [dsData._id.toString()] });
 
             await userRepo.find({ _id: user._id }).then(data => {
-                console.log(Object.getPrototypeOf(data?._id));
                 if (data) {
                     assert.deepEqual(data.datasets, [dsData._id.toString()]);
                 } else {

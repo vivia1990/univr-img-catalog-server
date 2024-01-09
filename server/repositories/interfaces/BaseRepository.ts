@@ -30,7 +30,3 @@ export interface Model {
     getTableName(): string;
     validate(): unknown
 }
-
-export default abstract class ModelRepository<T, IDKEY extends string> {
-    abstract createModelRepo(): BaseRepository<T, IDKEY, object>;
-}

@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import DataSet from '../../models/DataSet.js';
-import DataSetFactory, { DataSetRepository } from '../../repositories/mongo/DataSetRepository.js';
 import MongoConnection from '../../db/MongoConnection.js';
+import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js';
 
-const repo = new DataSetFactory(await MongoConnection.getConnection())
-    .createModelRepo() as DataSetRepository;
+const factory = new MongoFactory(await MongoConnection.getConnection());
+const repo = factory.createDataSetRepo();
 
 const router = Router();
 

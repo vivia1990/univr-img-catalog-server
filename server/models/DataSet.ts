@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Model } from '../repositories/factory/ModelRepository.js';
+import { Model } from '../repositories/interfaces/BaseRepository.js';
 import { tagSchema } from './Tag.js';
 import { ObjectId } from 'mongodb';
 

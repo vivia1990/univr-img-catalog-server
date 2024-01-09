@@ -1,4 +1,4 @@
-import { Model } from '../repositories/factory/ModelRepository.js';
+import { Model } from '../repositories/interfaces/BaseRepository.js';
 import { z } from 'zod';
 
 const userSchema = z.object({
