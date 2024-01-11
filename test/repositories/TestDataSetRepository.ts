@@ -29,20 +29,20 @@ test('DataSetRepository', async () => {
     await it('Insert one', async t => {
         const user = await userRepo.insert(createRandomUser());
 
-        const ds = new DataSet('dataset-1', user._id, { count: 20, validated: 0 });
+        const ds = new DataSet('dataset-1', { count: 20, validated: 0 }, [user._id]);
         await t.test('User datasets', async () => {
             const dsData = await dsRepo.insert(ds)
                 .then(data => {
-                    assert.deepEqual(ds.owner, data.owner);
+                    assert.deepEqual(ds.owners, data.owners);
                     return data;
                 }).catch(error => { throw error; });
 
             await userRepo.updateById(
-                user._id.toString(), { datasets: [dsData._id.toString()] });
+                user._id.toString(), { datasets: [dsData._id] });
 
             await userRepo.find({ _id: user._id }).then(data => {
                 if (data) {
-                    assert.deepEqual(data.datasets, [dsData._id.toString()]);
+                    assert.deepEqual(data.datasets, [dsData._id]);
                 } else {
                     assert.fail(new Error('Utente non trovato'));
                 }

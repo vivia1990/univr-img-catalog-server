@@ -7,7 +7,7 @@ export function createRandomUser (nDatasets: number = 0): User {
         faker.internet.userName(),
         faker.internet.email(),
         faker.internet.password(),
-        Array.from({ length: nDatasets }, () => new ObjectId().toString())
+        Array.from({ length: nDatasets }, () => new ObjectId(faker.number.int()))
     );
 }
 

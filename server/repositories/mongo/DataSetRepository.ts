@@ -11,7 +11,7 @@ export default class DataSetRepository extends MongoRepository<DataSet> implemen
         super(mongoDatabase, DataSet.tableName);
     }
 
-    users (): Promise<ModelWithId<User, '_id', ObjectId>[]> {
+    users (): Promise<ModelWithId<Partial<User>, '_id', ObjectId>[]> {
         throw new Error('Method not implemented.');
     }
 }

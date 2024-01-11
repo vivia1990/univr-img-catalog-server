@@ -32,6 +32,8 @@ export default class MongoConnection {
             new Promise<Mongo>((resolve, reject) => setTimeout(() => reject(new Error('connection timeout')), 10000))
         ]).catch(error => { throw error; });
 
+        connection.getConnection().on('commandFailed', console.error);
+
         MongoConnection.connection = connection;
     }
 
