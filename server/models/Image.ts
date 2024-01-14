@@ -12,13 +12,13 @@ const imgSchema = z.object({
 
 type ImgSchema = z.infer<typeof imgSchema>;
 
-export class Image implements Model {
+export default class Image implements Model {
     public static readonly tableName = 'image';
     constructor (
         public readonly name: ImgSchema['name'],
         public readonly path: ImgSchema['path'],
-        public readonly tags: ImgSchema['tags'],
-        public readonly datasets: ObjectId = new ObjectId()) {}
+        public tags: ImgSchema['tags'],
+        public datasets: ObjectId = new ObjectId()) {}
 
     getTableName (): string {
         return Image.tableName;

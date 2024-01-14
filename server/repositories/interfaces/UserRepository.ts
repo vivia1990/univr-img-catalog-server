@@ -1,5 +1,5 @@
 import DataSet from '../../models/DataSet.js';
-import { User } from '../../models/User.js';
+import User from '../../models/User.js';
 import { BaseRepository, ModelWithId } from './BaseRepository.js';
 
 export interface IUserRepository<IDKEY extends string, IDTYPE extends object>

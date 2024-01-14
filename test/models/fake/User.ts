@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { User } from '../../../server/models/User.js';
+import User from '../../../server/models/User.js';
 import { faker } from '@faker-js/faker';
 
 export function createRandomUser (nDatasets: number = 0): User {

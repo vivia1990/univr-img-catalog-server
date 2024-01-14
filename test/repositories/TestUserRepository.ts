@@ -1,7 +1,7 @@
 /* eslint-disable padded-blocks */
 import { test, it } from 'node:test';
 import assert from 'node:assert';
-import { User } from '../../server/models/User.js';
+import User from '../../server/models/User.js';
 import MongoConnection from '../../server/db/MongoConnection.js';
 import MongoFactory from '../../server/repositories/factory/mongo/MongoFactory.js';
 import { createRandomUser } from '../models/fake/User.js';

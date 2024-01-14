@@ -11,7 +11,7 @@ const userSchema = z.object({
 
 type UserSchema = z.infer<typeof userSchema>;
 
-export class User implements Model {
+export default class User implements Model {
     public static readonly tableName = 'user';
     constructor (
         public readonly name: UserSchema['name'],

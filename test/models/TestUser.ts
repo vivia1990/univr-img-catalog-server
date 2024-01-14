@@ -1,5 +1,5 @@
 /* eslint-disable padded-blocks */
-import { User } from '../../server/models/User.js';
+import User from '../../server/models/User.js';
 import { test } from 'node:test';
 import assert from 'node:assert';
 

@@ -36,10 +36,11 @@ export default class MongoRepository<T extends Document> implements BaseReposito
 
         return this.collection.insertMany(records as any)
             .then((result: InsertManyResult<T>) => {
+                console.log(result.insertedCount);
                 if (result.insertedCount !== length) {
                     throw new Error(`Errore inserimento, inseriti ${result.insertedCount}`);
                 }
-
+                console.log('aa');
                 return {
                     inserted: this.mapData(result.insertedIds, records),
                     failed: []
@@ -48,7 +49,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
                 if (!(error instanceof MongoBulkWriteError)) {
                     throw error;
                 }
-
+                console.log(error);
                 return {
                     inserted: this.mapData(error.insertedIds, records),
                     failed: items.slice(error.insertedCount)

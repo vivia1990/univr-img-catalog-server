@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import Mongo from '../../db/drivers/Mongo.js';
-import { User } from '../../models/User.js';
+import User from '../../models/User.js';
 import { ModelWithId } from '../interfaces/BaseRepository.js';
 import MongoRepository from './MongoRepository.js';
 import DataSet from '../../models/DataSet.js';
