@@ -1,18 +1,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // todo pensare a fix
 import { Db, ObjectId, Filter, InsertOneResult, Document, Collection, InsertManyResult, MongoBulkWriteError } from 'mongodb';
-import { BaseRepository, ModelWithId, InsertedMany } from '../interfaces/BaseRepository.js';
+import { BaseRepository, ModelWithId, InsertedMany, PaginationResult } from '../interfaces/BaseRepository.js';
 import Mongo from '../../db/drivers/Mongo.js';
+import { IPaginator } from '../interfaces/Paginator.js';
+import Paginator from './Paginator.js';
 
 export default class MongoRepository<T extends Document> implements BaseRepository<T, '_id', ObjectId> {
     private db: Db;
+    protected paginator: IPaginator;
     protected collection: Collection<T>;
     protected collectionName: string;
 
-    constructor (mongoDatabase: Mongo, collectionName: string) {
+    constructor (mongoDatabase: Mongo, collectionName: string, paginator: Paginator = new Paginator(100)) {
         this.db = mongoDatabase.db;
         this.collectionName = collectionName;
         this.collection = this.db.collection<T>(collectionName);
+        this.paginator = paginator;
+    }
+
+    setPaginator (paginator: IPaginator): void {
+        this.paginator = paginator;
+    }
+
+    getPaginator (): IPaginator {
+        return this.paginator;
+    }
+
+    async findAllPaginated (item: Filter<T>, page: number): Promise<PaginationResult<T, '_id', ObjectId>> {
+        const pageSize = this.paginator.getPageSize();
+        const filter = {
+            $facet: {
+                metadata: [{ $count: 'totalCount' }],
+                data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }]
+            }
+        };
+        const [values] = await this.collection
+            .aggregate([{ $match: item }, filter]).toArray() as Document[1];
+
+        return {
+            data: values.data,
+            pagination: this.paginator.buildMetaData(page, values.metadata[0].totalCount)
+        };
     }
 
     insert (item: T): Promise<ModelWithId<T, '_id', ObjectId>> {
@@ -36,11 +65,10 @@ export default class MongoRepository<T extends Document> implements BaseReposito
 
         return this.collection.insertMany(records as any)
             .then((result: InsertManyResult<T>) => {
-                console.log(result.insertedCount);
                 if (result.insertedCount !== length) {
                     throw new Error(`Errore inserimento, inseriti ${result.insertedCount}`);
                 }
-                console.log('aa');
+
                 return {
                     inserted: this.mapData(result.insertedIds, records),
                     failed: []
@@ -49,7 +77,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
                 if (!(error instanceof MongoBulkWriteError)) {
                     throw error;
                 }
-                console.log(error);
+
                 return {
                     inserted: this.mapData(error.insertedIds, records),
                     failed: items.slice(error.insertedCount)

@@ -4,6 +4,8 @@ import assert from 'node:assert';
 import { env } from '../../server/env.js';
 import User from '../../server/models/User.js';
 import MongoConnection from '../../server/db/MongoConnection.js';
+import RestPaginator from '../../server/repositories/mongo/RestPaginator.js';
+import { RestPaginationMetaData } from '../../server/repositories/interfaces/Paginator.js';
 import MongoFactory from '../../server/repositories/factory/mongo/MongoFactory.js';
 import { createMultipleRandomUser, createRandomUser } from '../models/fake/User.js';
 import { MongoServerError } from 'mongodb';
@@ -127,6 +129,62 @@ test('MongoRepository', async () => {
             const result = await repo.deleteMany({ _id: { $exists: true } });
             assert.equal(result, length);
         });
+
+    });
+
+    await cleanUserCollection();
+    await it('Find paginated', async t => {
+        const length = 378;
+        await t.test('Inserting users', async () => {
+            const users = createMultipleRandomUser(length);
+            await repo.insertMany(users).then(data => assert.equal(data.inserted.length, length));
+        });
+
+        await t.test('Pagination metadata', async () => {
+
+            let count = 0;
+            const pageSize = repo.getPaginator().getPageSize();
+            const pageCount = Math.floor(length / pageSize) || 1;
+            while (count++ < 5) {
+                const results = await repo.findAllPaginated({}, count);
+
+                const pagination = results.pagination;
+                assert.equal(pagination.totalItems, length);
+                assert.equal(pagination.currentPage, count);
+                assert.equal(pagination.totalPages, pageCount);
+                /*  assert.deepEqual(pagination.links, {
+                    first: `${baseUrl}?page=${1}`,
+                    prev: count > 1 ? `${baseUrl}?page=${count - 1}` : '',
+                    next: count < pageCount ? `${baseUrl}?page=${count + 1}` : '',
+                    last: `${baseUrl}?page=${pageCount}`
+                }); */
+            }
+
+        }).catch(e => { throw e; });
+
+        await t.test('RestPagination metadata', async () => {
+
+            let count = 0;
+            const baseUrl = '/user';
+            repo.setPaginator(new RestPaginator('/user'));
+            const pageSize = repo.getPaginator().getPageSize();
+            const pageCount = Math.floor(length / pageSize) || 1;
+            while (count++ < 5) {
+                const results = await repo.findAllPaginated({}, count);
+
+                const pagination = results.pagination as RestPaginationMetaData;
+                assert.equal(pagination.totalItems, length);
+                assert.equal(pagination.currentPage, count);
+                assert.equal(pagination.totalPages, pageCount);
+                assert.deepEqual(pagination.links, {
+                    first: `${baseUrl}?page=${1}`,
+                    prev: count > 1 ? `${baseUrl}?page=${count - 1}` : '',
+                    next: count < pageCount ? `${baseUrl}?page=${count + 1}` : '',
+                    last: `${baseUrl}?page=${pageCount}`
+                });
+            }
+
+        }).catch(e => { throw e; });
 
     });
 

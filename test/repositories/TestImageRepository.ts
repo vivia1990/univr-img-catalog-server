@@ -8,6 +8,7 @@ import { env } from '../../server/env.js';
 import DataSet from '../../server/models/DataSet.js';
 import User from '../../server/models/User.js';
 import { createRandomImage } from '../models/fake/Image.js';
+import Image from '../../server/models/Image.js';
 
 MongoConnection.setConnectionParams({
     name: env.DB_NAME,
@@ -24,6 +25,7 @@ const userRepo = factory.createUserRepo();
 
 async function cleanDb () {
     const connection = await MongoConnection.getConnection();
+    await connection.db.dropCollection(Image.tableName).catch(error => { throw error; });
     await connection.db.dropCollection(DataSet.tableName).catch(error => { throw error; });
     await connection.db.dropCollection(User.tableName).catch(error => { throw error; });
     await connection.db.collection<User>(User.tableName).createIndex({ email: 1 }, { unique: true });
@@ -72,10 +74,9 @@ test('ImageRepository', async () => {
                     img.datasets = ds._id;
                     images[index] = img;
                 }
-                chunks[count++] = imRepo.insertMany(images).then(() => console.log('inseriti'));
+                chunks[count++] = imRepo.insertMany(images);
             }
-            await Promise.all(chunks).then(() => console.log('fine'))
-                .catch(() => console.log('error'));
+            await Promise.all(chunks).catch(() => console.log('error'));
         });
 
     }).catch(error => {
