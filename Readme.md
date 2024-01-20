@@ -24,7 +24,13 @@ Follow these instructions to get the project up and running.
     ```bash
         yarn build
     ```
-4. Run the server
+4. Run the related services (mongodb)
+    ```bash
+        docker compose up -d # to build the containers
+        docker compose start # if you have already built the containers
+    ```
+
+5. Run the server
     ```bash
         yarn express
     ```
@@ -37,9 +43,18 @@ Copy the versioned .env.example file to .env, and change it accordingly
 
 ### Test
 Test are based on builtin Node's testing suite (starting from node 20) <br>
-Run the tests with:
-```bash
+Run with:
+1. Build the test
+    ```bash
     yarn test # build the test
-    yarn run-test {args} dist-test/path_to_folder
-```
+    ```
+2. Run the related services (mongodb)
+    ```bash
+        docker compose up -d # to build the containers
+        docker compose start # if you have already built the containers
+    ```
+3. Run the tests:
+    ```bash
+     yarn run-test {args} dist-test/ path_to_folder
+    ```
 By **Default** all file named `Test` will be run
