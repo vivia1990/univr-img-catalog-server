@@ -8,7 +8,7 @@ import { env } from '../../server/env.js';
 import DataSet from '../../server/models/DataSet.js';
 
 MongoConnection.setConnectionParams({
-    name: env.DB_NAME,
+    name: 'test_ds',
     address: env.DB_ADDRESS,
     passw: env.DB_PASSW,
     port: env.DB_PORT,
@@ -28,6 +28,7 @@ test('DataSetRepository', async () => {
     await cleanDataSetCollection();
     await it('Insert one', async t => {
         const user = await userRepo.insert(createRandomUser());
+        assert.notEqual(user._id, undefined);
 
         const ds = new DataSet('dataset-1', { count: 20, validated: 0 }, [user._id]);
         await t.test('User datasets', async () => {
@@ -38,7 +39,8 @@ test('DataSetRepository', async () => {
                 }).catch(error => { throw error; });
 
             await userRepo.updateById(
-                user._id.toString(), { datasets: [dsData._id] });
+                user._id.toString(), { datasets: [dsData._id] })
+                .catch(() => console.log('Errore strano'));
 
             await userRepo.find({ _id: user._id }).then(data => {
                 if (data) {
@@ -56,4 +58,7 @@ test('DataSetRepository', async () => {
         Promise.reject(error);
     });
 
-}).finally(async () => await MongoConnection.closeConnection());
+}).finally(async () => {
+    await await (await MongoConnection.getConnection()).db.dropDatabase();
+    await MongoConnection.closeConnection();
+});

@@ -8,7 +8,7 @@ import { createRandomUser } from '../models/fake/User.js';
 import { env } from '../../server/env.js';
 
 MongoConnection.setConnectionParams({
-    name: env.DB_NAME,
+    name: 'test_user',
     address: env.DB_ADDRESS,
     passw: env.DB_PASSW,
     port: env.DB_PORT,
@@ -37,4 +37,7 @@ test('UserRepository', async () => {
         Promise.reject(error);
     });
 
-}).finally(async () => await MongoConnection.closeConnection());
+}).finally(async () => {
+    await (await MongoConnection.getConnection()).db.dropDatabase();
+    await MongoConnection.closeConnection();
+});

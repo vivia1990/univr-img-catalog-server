@@ -13,7 +13,7 @@ import { MongoServerError } from 'mongodb';
 const user = new User('Mich', 'donvivia@gmail.com', 'aaa');
 
 MongoConnection.setConnectionParams({
-    name: env.DB_NAME,
+    name: 'test_mongo',
     address: env.DB_ADDRESS,
     passw: env.DB_PASSW,
     port: env.DB_PORT,
@@ -33,7 +33,6 @@ test('MongoRepository', async () => {
     await it('Insert one', async t => {
 
         await t.test('Insert one user', () => repo.insert(user).then(data => {
-            console.log('insert');
             assert.equal(data.email, user.email);
             assert.equal(data.password, user.password);
             assert.equal(data.name, user.name);
@@ -81,6 +80,7 @@ test('MongoRepository', async () => {
             .catch(error => {
                 assert.equal(error instanceof MongoServerError, true);
                 assert.notEqual((error as MongoServerError).code, 11000);
+                assert.fail(error);
             }));
 
         const arr2 = [...arr, createRandomUser()];
@@ -92,6 +92,7 @@ test('MongoRepository', async () => {
             .catch(error => {
                 assert.equal(error instanceof MongoServerError, true);
                 assert.notEqual((error as MongoServerError).code, 11000);
+                assert.fail(error);
             }));
 
         const arr3 = [createRandomUser(), ...arr];
@@ -111,6 +112,7 @@ test('MongoRepository', async () => {
             .catch(error => {
                 assert.equal(error instanceof MongoServerError, true);
                 assert.notEqual((error as MongoServerError).code, 11000);
+                assert.fail(error);
             }));
 
     });
@@ -152,12 +154,6 @@ test('MongoRepository', async () => {
                 assert.equal(pagination.totalItems, length);
                 assert.equal(pagination.currentPage, count);
                 assert.equal(pagination.totalPages, pageCount);
-                /*  assert.deepEqual(pagination.links, {
-                    first: `${baseUrl}?page=${1}`,
-                    prev: count > 1 ? `${baseUrl}?page=${count - 1}` : '',
-                    next: count < pageCount ? `${baseUrl}?page=${count + 1}` : '',
-                    last: `${baseUrl}?page=${pageCount}`
-                }); */
             }
 
         }).catch(e => { throw e; });
@@ -188,4 +184,7 @@ test('MongoRepository', async () => {
 
     });
 
-}).finally(async () => await MongoConnection.closeConnection());
+}).finally(async () => {
+    await (await MongoConnection.getConnection()).db.dropDatabase();
+    await MongoConnection.closeConnection();
+});

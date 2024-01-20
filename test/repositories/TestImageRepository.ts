@@ -11,7 +11,7 @@ import { createRandomImage } from '../models/fake/Image.js';
 import Image from '../../server/models/Image.js';
 
 MongoConnection.setConnectionParams({
-    name: env.DB_NAME,
+    name: 'test_im',
     address: env.DB_ADDRESS,
     passw: env.DB_PASSW,
     port: env.DB_PORT,
@@ -84,4 +84,7 @@ test('ImageRepository', async () => {
         Promise.reject(error);
     });
 
-}).finally(async () => await MongoConnection.closeConnection());
+}).finally(async () => {
+    await (await MongoConnection.getConnection()).db.dropDatabase();
+    await MongoConnection.closeConnection();
+});
