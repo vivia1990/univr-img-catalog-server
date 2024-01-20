@@ -4,7 +4,7 @@ import { Request, Response, json, NextFunction } from 'express';
 import { env } from './env.js';
 import MongoConnection from './db/MongoConnection.js';
 
-const PORT = 3000;
+const PORT = env.PORT;
 process.env.TZ = 'Europe/Rome';
 
 console.info(env);
