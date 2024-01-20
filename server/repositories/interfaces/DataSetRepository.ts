@@ -11,6 +11,6 @@ export type DataSetFk = DataSet & {
 
 export interface IDataSetRepository<IDKEY extends string, IDTYPE extends object>
 extends BaseRepository<PropertiesOnly<DataSet>, IDKEY, IDTYPE> {
-    users(dsRepo: IDBFactory<IDKEY, IDTYPE>, idDataset: IDTYPE, query: Partial<QueryFilter<User>>):
+    users(dsRepo: IDBFactory<IDKEY, IDTYPE>, idDataset: IDTYPE, query?: Partial<QueryFilter<User>>):
         Promise<ModelWithId<Partial<User>, IDKEY, IDTYPE>[]>
 }
