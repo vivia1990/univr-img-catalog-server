@@ -7,7 +7,7 @@ interface Record {
     [key: string]: unknown;
 }
 
-export interface DBFactory<IDKEY extends string, IDTYPE extends object> {
+export interface IDBFactory<IDKEY extends string, IDTYPE extends object> {
     createUserRepo(): IUserRepository<IDKEY, IDTYPE>;
     createDataSetRepo(): IDataSetRepository<IDKEY, IDTYPE>;
     createImageRepo(): IImageRepository<IDKEY, IDTYPE>;
