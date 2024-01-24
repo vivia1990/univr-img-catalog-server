@@ -1,7 +1,8 @@
 export type PaginationMetaData = {
     totalPages: number,
     totalItems: number,
-    currentPage: number
+    currentPage: number,
+    pageSize: number
 }
 
 export type RestPaginationMetaData = PaginationMetaData & {

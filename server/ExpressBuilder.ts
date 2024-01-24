@@ -1,18 +1,21 @@
-import express, { Application, RequestHandler }
+import express, { Application, RequestHandler, Router }
     from 'express';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'delete';
 type Routes = {path: string, method: HttpMethod, handler: RequestHandler};
+type Routers = {path: string, router: Router};
 
 export default class ExpressBuilder {
     public readonly app : Application;
     private routes: Routes[];
     private middlewares: RequestHandler[];
+    private routers: Routers[];
 
     constructor () {
         this.app = express();
         this.routes = [];
         this.middlewares = [];
+        this.routers = [];
     }
 
     addMiddleware (mid: RequestHandler) {
@@ -20,9 +23,11 @@ export default class ExpressBuilder {
         return this;
     }
 
-    /*     addRouter (path: string, routes: Router) {
+    addRouter (path: string, router: Router) {
+        console.log(router);
+        this.routers.push({ path, router });
         return this;
-    } */
+    }
 
     addRoute (path: string, method: HttpMethod, route: RequestHandler) {
         this.routes.push({ path, method, handler: route });
@@ -36,8 +41,13 @@ export default class ExpressBuilder {
         });
 
         this.routes.forEach(route => {
-            console.info(route);
+            console.info('\nRotta: "%s", Method: "%s"\n', route.path, route.method);
             this.app[route.method](route.path, route.handler);
+        });
+
+        this.routers.forEach(obj => {
+            console.info('\n%s\n', obj.path);
+            this.app.use(obj.path, obj.router);
         });
 
         return this.app;

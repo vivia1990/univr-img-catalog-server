@@ -21,7 +21,8 @@ export default class Paginator implements IPaginator<PaginationMetaData> {
         return {
             totalItems,
             totalPages: pageCount,
-            currentPage
+            currentPage,
+            pageSize: this.pageSize
         };
     }
 }

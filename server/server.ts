@@ -19,8 +19,10 @@ console.info(connection);
 
 new ExpressBuilder()
     .addMiddleware((req: Request, res: Response, next: NextFunction) => {
+        console.info('\n***********\nDebug Middleware\n\n');
         console.info(req.url);
         console.log(req.headers);
+        console.log('\n***********\n');
         next();
     })
     .addMiddleware(json())
@@ -28,6 +30,6 @@ new ExpressBuilder()
     .addRoute('/index', 'get', (req: Request, res: Response) => {
         res.send('<h1>hello world</h1>');
     })
+    .addRouter('/dataset', (await import('./http/routes/DataSet.js')).default)
     .build()
-    .use('/dataset', (await import('./http/routes/DataSet.js')).default)
     .listen(PORT, () => console.info(`server started on ${PORT}`));
