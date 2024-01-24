@@ -24,7 +24,6 @@ export default class ExpressBuilder {
     }
 
     addRouter (path: string, router: Router) {
-        console.log(router);
         this.routers.push({ path, router });
         return this;
     }
