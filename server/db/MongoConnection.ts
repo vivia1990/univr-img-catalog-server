@@ -46,7 +46,7 @@ export default class MongoConnection {
     }
 
     static async closeConnection () {
-        await MongoConnection.connection?.getConnection().close();
+        await MongoConnection.connection?.getConnection().close(true);
         MongoConnection.connection = null;
     }
 

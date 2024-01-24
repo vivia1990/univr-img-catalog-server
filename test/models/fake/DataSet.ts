@@ -6,7 +6,7 @@ export function createRandomDataSet (nDatasets: number = 0): DataSet {
     return new DataSet(
         faker.internet.userName(),
         { count: faker.number.int(1000), validated: faker.number.int(1000) },
-        Array.from({ length: nDatasets }, () => new ObjectId(faker.number.int())),
+        Array.from({ length: nDatasets || 2 }, () => new ObjectId(faker.number.int())),
         Array.from({ length: 15 }, () => ({ name: faker.internet.domainWord(), img_tagged: 0 }))
     );
 }

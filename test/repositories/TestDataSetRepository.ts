@@ -1,12 +1,13 @@
 /* eslint-disable padded-blocks */
 import { test, it } from 'node:test';
 import assert from 'node:assert';
+import { DataSetCollection } from '../../server/db/init/Constraints.js';
 import MongoFactory from '../../server/repositories/factory/mongo/MongoFactory.js';
 import MongoConnection from '../../server/db/MongoConnection.js';
 import { createRandomUser } from '../models/fake/User.js';
 import { env } from '../../server/env.js';
 import DataSet from '../../server/models/DataSet.js';
-import { ObjectId } from 'mongodb';
+import { MongoServerError, ObjectId } from 'mongodb';
 
 type PrUserType = PromiseFulfilledResult<GetReturnType<typeof createRandomUser> & {_id: ObjectId}>;
 
@@ -25,6 +26,7 @@ const userRepo = factory.createUserRepo();
 async function cleanDataSetCollection () {
     const connection = await MongoConnection.getConnection();
     await connection.db.dropCollection(DataSet.tableName).catch(error => { throw error; });
+    await DataSetCollection(connection);
 }
 
 test('DataSetRepository', async () => {
@@ -97,6 +99,27 @@ test('DataSetRepository', async () => {
     }).catch(error => {
         console.error(error);
         Promise.reject(error);
+    });
+
+    await cleanDataSetCollection();
+    await it('Insert Constraint', async () => {
+        const user = await userRepo.insert(createRandomUser());
+        assert.notEqual(user._id, undefined);
+
+        const ds = new DataSet('dataset-1', { count: 20, validated: 0 }, [user._id]);
+        await dsRepo.insert(ds)
+            .then(data => {
+                assert.deepEqual(ds.owners, data.owners);
+                return data;
+            }).catch(error => { throw error; });
+
+        await dsRepo.insert(ds)
+            .then(() => assert.throws(() => false))
+            .catch(error => {
+                assert.equal(error instanceof MongoServerError, true);
+                assert.equal((error as MongoServerError).code, 11000);
+            });
+
     });
 
 }).finally(async () => {

@@ -1,6 +1,7 @@
 /* eslint-disable padded-blocks */
 import { test, it } from 'node:test';
 import assert from 'node:assert';
+import { UserCollection } from '../../server/db/init/Constraints.js';
 import User from '../../server/models/User.js';
 import MongoConnection from '../../server/db/MongoConnection.js';
 import MongoFactory from '../../server/repositories/factory/mongo/MongoFactory.js';
@@ -20,7 +21,7 @@ const repo = new MongoFactory(await MongoConnection.getConnection())
 async function cleanUserCollection () {
     const connection = await MongoConnection.getConnection();
     await connection.db.dropCollection(User.tableName).catch(error => { throw error; });
-    await connection.db.collection<User>(User.tableName).createIndex({ email: 1 }, { unique: true });
+    await UserCollection(connection);
 }
 
 test('UserRepository', async () => {
