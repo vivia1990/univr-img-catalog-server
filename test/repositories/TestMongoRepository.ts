@@ -115,6 +115,18 @@ test('MongoRepository', async () => {
                 assert.fail(error);
             }));
 
+        await t.test('Select users fields', async () => {
+
+            const user = await repo.find({}, ['email', 'datasets']);
+            if (user) {
+                assert.notEqual(user._id, undefined);
+                assert.notEqual(user.email, undefined);
+                assert.notEqual(user.email.length, 0);
+                assert.notEqual(user.datasets, undefined);
+                const test = JSON.parse(JSON.stringify(user)) as User;
+                assert.equal(test?.name, undefined);
+            }
+        });
     });
 
     await cleanUserCollection();

@@ -6,6 +6,9 @@ import MongoConnection from '../../server/db/MongoConnection.js';
 import { createRandomUser } from '../models/fake/User.js';
 import { env } from '../../server/env.js';
 import DataSet from '../../server/models/DataSet.js';
+import { ObjectId } from 'mongodb';
+
+type PrUserType = PromiseFulfilledResult<GetReturnType<typeof createRandomUser> & {_id: ObjectId}>;
 
 MongoConnection.setConnectionParams({
     name: 'test_ds',
@@ -53,12 +56,50 @@ test('DataSetRepository', async () => {
             });
         });
 
+        await t.test('Select users fields', async () => {
+
+            const ds = await dsRepo.find({}, ['tags']);
+            if (ds) {
+                assert.notEqual(ds._id, undefined);
+                // beat ts
+                const test = JSON.parse(JSON.stringify(ds)) as DataSet;
+                assert.equal(test?.name, undefined);
+                assert.equal(test?.owners, undefined);
+            }
+        });
+
+        await t.test('Get Dataset Users', async () => {
+            await cleanDataSetCollection();
+            const dsRepoRel = factory.createDataSetRepo(true);
+            const ds = new DataSet('dataset-1', { count: 20, validated: 0 }, []);
+            const dsData = await dsRepoRel.insert(ds)
+                .catch(error => { throw error; });
+
+            const users = await Promise.allSettled([
+                userRepo.insert(createRandomUser(1, { datasets: [dsData._id] })),
+                userRepo.insert(createRandomUser(1, { datasets: [dsData._id] })),
+                userRepo.insert(createRandomUser(1, { datasets: [dsData._id] }))
+            ]).catch(e => { throw e; });
+
+            const ids = users.filter((result)
+                : result is PrUserType => result.status === 'fulfilled')
+                .map(user => user.value._id);
+
+            await dsRepoRel.updateById(dsData._id.toString(), { owners: ids });
+
+            await dsRepoRel.users(dsData._id).then(result => {
+                const idsResult = result.data.map(user => user._id);
+                assert.deepEqual(idsResult, ids);
+            });
+
+        });
+
     }).catch(error => {
         console.error(error);
         Promise.reject(error);
     });
 
 }).finally(async () => {
-    await await (await MongoConnection.getConnection()).db.dropDatabase();
+    await (await MongoConnection.getConnection()).db.dropDatabase();
     await MongoConnection.closeConnection();
 });

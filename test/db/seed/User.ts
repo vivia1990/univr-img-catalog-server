@@ -1,6 +1,6 @@
 import MongoFactory from '../../../server/repositories/factory/mongo/MongoFactory.js';
 import MongoConnection from '../../../server/db/MongoConnection.js';
-import { createMultipleRandomDataSet } from '../../models/fake/DataSet.js';
+import { createMultipleRandomUser } from '../../models/fake/User.js';
 import { env } from '../../../server/env.js';
 
 MongoConnection.setConnectionParams({
@@ -12,8 +12,8 @@ MongoConnection.setConnectionParams({
 });
 
 const factory = new MongoFactory(await MongoConnection.getConnection());
-const dsRepo = factory.createDataSetRepo();
+const userRepo = factory.createUserRepo();
 
-await dsRepo.insertMany(createMultipleRandomDataSet(500));
+await userRepo.insertMany(createMultipleRandomUser(500));
 
 await MongoConnection.closeConnection();
