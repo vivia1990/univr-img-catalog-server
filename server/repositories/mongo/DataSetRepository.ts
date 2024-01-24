@@ -1,21 +1,27 @@
-import { ObjectId } from 'mongodb';
+import { Filter, ObjectId } from 'mongodb';
 import Mongo from '../../db/drivers/Mongo.js';
 import User from '../../models/User.js';
-import { ModelWithId, QueryFilter } from '../interfaces/BaseRepository.js';
+import { PaginationResult, QueryFilter } from '../interfaces/BaseRepository.js';
 import MongoRepository from './MongoRepository.js';
 import DataSet from '../../models/DataSet.js';
 import { IDataSetRepository } from '../interfaces/DataSetRepository.js';
-import MongoFactory from '../factory/mongo/MongoFactory.js';
+import UserRepository from './UserRepository.js';
 
 export default class DataSetRepository extends MongoRepository<DataSet> implements IDataSetRepository<'_id', ObjectId> {
-    constructor (mongoDatabase: Mongo) {
+    private userRepo: UserRepository | null;
+
+    constructor (mongoDatabase: Mongo, userRepo: UserRepository | null = null) {
         super(mongoDatabase, DataSet.tableName);
+        this.userRepo = userRepo;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    users (factory: MongoFactory, idDataset: ObjectId, query: Partial<QueryFilter<User>> = {}): Promise<ModelWithId<Partial<User>, '_id', ObjectId>[]> {
-        throw new Error('TODO');
-        /* const filter: Filter<User> = { datasets: { $in: [new ObjectId(idDataset)] } };
-        factory.createDataSetRepo().find(query.filter); */
+    users (idDataset: ObjectId, query: QueryFilter<User> = {}): Promise<PaginationResult<User, '_id', ObjectId>> {
+        if (!this.userRepo) {
+            return Promise.reject(new Error('Istanziato senza relazioni'));
+        }
+
+        const filter: Filter<User> = { datasets: { $in: [new ObjectId(idDataset)] } };
+
+        return this.userRepo.findAllPaginated({ ...filter, ...query.filter || {} }, query.page || 1);
     }
 }

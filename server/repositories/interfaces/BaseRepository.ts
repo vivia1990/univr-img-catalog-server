@@ -4,9 +4,17 @@ export type ModelWithId<T, ID extends string, TYPE extends object> = Omit<T, ID>
 
 export type PropertiesOnly<T> = Pick<T, { [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? never : K }[keyof T]>;
 
+declare global {
+
+    type GetReturnType<Type> = Type extends (...args: never[]) => infer Return
+        ? Return : never;
+
+}
+
 export type QueryFilter<T> = {
-    fields: {[K in keyof Partial<T>]: 1 | 0};
-    filter: unknown
+    fields?: {[K in keyof Partial<T>]: 1 | 0};
+    filter?: Partial<T>;
+    page?: number;
 };
 /**
  * Ritorna i record inseriti, e gli eventuali record non inseriti nella chiave failed

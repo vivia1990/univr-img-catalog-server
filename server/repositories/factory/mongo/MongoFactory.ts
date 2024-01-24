@@ -16,7 +16,11 @@ export default class MongoFactory implements IDBFactory<'_id', ObjectId> {
         return new UserRepository(this.client);
     }
 
-    createDataSetRepo () {
+    createDataSetRepo (withRelations: boolean = false) {
+        if (withRelations) {
+            return new DataSetRepository(this.client, this.createUserRepo());
+        }
+
         return new DataSetRepository(this.client);
     }
 
