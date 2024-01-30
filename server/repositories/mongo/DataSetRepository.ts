@@ -15,7 +15,7 @@ export default class DataSetRepository extends MongoRepository<DataSet> implemen
         this.userRepo = userRepo;
     }
 
-    users (idDataset: ObjectId, query: QueryFilter<User> = {}): Promise<PaginationResult<User, '_id', ObjectId>> {
+    users (idDataset: ObjectId, query: QueryFilter<User> = {}): Promise<PaginationResult<User, keyof User, '_id', ObjectId>> {
         if (!this.userRepo) {
             return Promise.reject(new Error('Istanziato senza relazioni'));
         }

@@ -1,14 +1,12 @@
 import { IPaginator, PaginationMetaData } from './Paginator.js';
 
-export type ModelWithId<T, ID extends string, TYPE extends object> = Omit<T, ID> & { [key in ID]: TYPE };
-
-export type PropertiesOnly<T> = Pick<T, { [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? never : K }[keyof T]>;
+export type ModelWithId<T, ID extends string, TYPE extends object> = Omit<PropertiesOnly<T>, ID> & { [key in ID]: TYPE };
 
 declare global {
 
     type GetReturnType<Type> = Type extends (...args: never[]) => infer Return
         ? Return : never;
-
+    type PropertiesOnly<T> = Pick<T, { [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? never : K }[keyof T]>;
 }
 
 export type QueryFilter<T> = {
@@ -20,12 +18,12 @@ export type QueryFilter<T> = {
  * Ritorna i record inseriti, e gli eventuali record non inseriti nella chiave failed
  */
 export type InsertedMany<T, IDKEY extends string, IDTYPE extends object> = {
-    inserted: ModelWithId<T, IDKEY, IDTYPE>[];
+    inserted: ModelWithId<PropertiesOnly<T>, IDKEY, IDTYPE>[];
     failed: T[];
 };
 
-export type PaginationResult<T, IDKEY extends string, IDTYPE extends object> = {
-    data: ModelWithId<T, IDKEY, IDTYPE>[],
+export type PaginationResult<T, Fields extends keyof T, IDKEY extends string, IDTYPE extends object> = {
+    data: ModelWithId<Pick<T, Fields>, IDKEY, IDTYPE>[],
     pagination: PaginationMetaData
 }
 
@@ -41,7 +39,7 @@ export interface Reader<T, IDKEY extends string, IDTYPE extends object> {
     find<Fields extends keyof T = keyof T>(item: unknown, fields?: Fields[]): Promise<ModelWithId<Pick<T, Fields>, IDKEY, IDTYPE> | null>;
     findById<Fields extends keyof T = keyof T>(id: string, fields?: Fields[]): Promise<ModelWithId<Pick<T, Fields>, IDKEY, IDTYPE> | null>;
     findAll<Fields extends keyof T = keyof T>(item: unknown, fields?: Fields[]): Promise<ModelWithId<Pick<T, Fields>, IDKEY, IDTYPE>[]>;
-    findAllPaginated<Fields extends keyof T = keyof T>(item: unknown, page: number, fields?: Fields[]): Promise<PaginationResult<T, IDKEY, IDTYPE>>
+    findAllPaginated<Fields extends keyof T = keyof T>(item: unknown, page: number, fields?: Fields[]): Promise<PaginationResult<T, Fields, IDKEY, IDTYPE>>
     setPaginator(paginator: IPaginator): void;
     getPaginator(): IPaginator;
 }

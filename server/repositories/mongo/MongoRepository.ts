@@ -11,13 +11,13 @@ type ModelWithId<T> = Model<T, '_id', ObjectId>;
 export default class MongoRepository<T extends Document> implements BaseRepository<T, '_id', ObjectId> {
     protected db: Db;
     protected paginator: IPaginator;
-    protected collection: Collection<T>;
+    protected collection: Collection<PropertiesOnly<T>>;
     protected collectionName: string;
 
     constructor (mongoDatabase: Mongo, collectionName: string, paginator: Paginator = new Paginator(100)) {
         this.db = mongoDatabase.db;
         this.collectionName = collectionName;
-        this.collection = this.db.collection<T>(collectionName);
+        this.collection = this.db.collection<PropertiesOnly<T>>(collectionName);
         this.paginator = paginator;
     }
 
@@ -42,7 +42,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
             .aggregate<{metadata: [{totalCount: number}], data: ModelWithId<T>[]}>([{ $match: item }, filter]);
     }
 
-    async findAllPaginated (item: Filter<T>, page: number): Promise<PaginationResult<T, '_id', ObjectId>> {
+    async findAllPaginated<Fields extends keyof T> (item: Filter<T>, page: number): Promise<PaginationResult<T, Fields, '_id', ObjectId>> {
         const [values] = await this.cursorPagination(item, page).toArray();
 
         return {
@@ -54,7 +54,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
     insert (item: T): Promise<ModelWithId<T>> {
         const fields: T = { created_at: new Date(), updated_at: null, ...item };
         return this.collection.insertOne(fields as any)
-            .then((result: InsertOneResult<T>) => (
+            .then((result: InsertOneResult<PropertiesOnly<T>>) => (
                     { ...{ _id: result.insertedId }, ...fields } as ModelWithId<T>
             ));
     }
@@ -93,7 +93,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
     }
 
     updateById (id: string, item: Partial<T>): Promise<boolean> {
-        const filter = { _id: new ObjectId(id) } as Filter<T>;
+        const filter = { _id: new ObjectId(id) } as Filter<PropertiesOnly<T>>;
 
         return this.collection.updateOne(filter, { $set: { updated_at: new Date(), ...item } })
             .then(result => {
@@ -106,7 +106,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
     }
 
     deleteById (id: string): Promise<boolean | Error> {
-        const filter = { _id: new ObjectId(id) } as Filter<T>;
+        const filter = { _id: new ObjectId(id) } as Filter<PropertiesOnly<T>>;
 
         return this.collection.deleteOne(filter)
             .then(result => {
@@ -119,7 +119,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
     }
 
     deleteMany (item: Filter<T>): Promise<number | Error> {
-        return this.collection.deleteMany(item).then(result => {
+        return this.collection.deleteMany(item as Filter<PropertiesOnly<T>>).then(result => {
             if (result.deletedCount) {
                 return result.deletedCount;
             }
@@ -140,16 +140,16 @@ export default class MongoRepository<T extends Document> implements BaseReposito
     findById<Fields extends keyof T> (id: string, fields: Fields[] = []): Promise<ModelWithId<Pick<T, Fields>> | null> {
         const projection = this.parseFields(fields);
         return this.collection
-            .findOne({ _id: new ObjectId(id) } as Filter<T>, { projection });
+            .findOne({ _id: new ObjectId(id) } as Filter<PropertiesOnly<T>>, { projection });
     }
 
     find<Fields extends keyof T> (item: Filter<T>, fields: Fields[] = []): Promise<ModelWithId<Pick<T, Fields>> | null> {
         const projection = this.parseFields(fields);
-        return this.collection.findOne(item, { projection });
+        return this.collection.findOne(item as Filter<PropertiesOnly<T>>, { projection });
     }
 
-    findAll<Fields extends keyof T> (item: Filter<T>, fields: Fields[] = []): Promise<ModelWithId<T>[]> {
+    findAll<Fields extends keyof T> (item: Filter<T>, fields: Fields[] = []): Promise<ModelWithId<Pick<T, Fields>>[]> {
         const projection = this.parseFields(fields);
-        return this.collection.find(item, { projection }).toArray();
+        return this.collection.find(item as Filter<PropertiesOnly<T>>, { projection }).toArray();
     }
 }
