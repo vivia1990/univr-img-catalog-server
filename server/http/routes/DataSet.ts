@@ -88,7 +88,7 @@ router.post('/add', (req: PostReq, res: Response<{id: string} | {message: string
         });
 });
 
-router.put('/add', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
+router.put('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
     repo.updateById(req.body.id, req.body)
         .then(success => {
             if (!success) {
