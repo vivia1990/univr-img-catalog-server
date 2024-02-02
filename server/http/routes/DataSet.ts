@@ -71,13 +71,12 @@ router.get('/', async (req: GetSearchReq, res: Response) => {
     res.json(ds);
 });
 
-router.post('/add', (req: PostReq, res: Response<{id: string} | {message: string}>) => {
+router.post('/add', (req: PostReq, res: Response< unknown | {message: string}>) => {
     repo.insert(req.body)
         .then(data => {
-            const id = data._id.toString();
             res.statusCode = 201;
-            res.setHeader('Location', `/dataset/${id}`);
-            res.json({ id });
+            res.setHeader('Location', `/dataset/${data._id}`);
+            res.json(data);
         })
         .catch(error => {
             console.error(error);
