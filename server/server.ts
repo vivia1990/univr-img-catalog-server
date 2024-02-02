@@ -8,6 +8,7 @@ const PORT = env.PORT;
 process.env.TZ = 'Europe/Rome';
 
 console.info(env);
+// N.B. Tutti i moduli che usano la connessione con il db devono essere importati dopo, con import dinamici
 const connection = MongoConnection.setConnectionParams({
     name: env.DB_NAME,
     address: env.DB_ADDRESS,
@@ -31,5 +32,6 @@ new ExpressBuilder()
         res.send('<h1>hello world</h1>');
     })
     .addRouter('/dataset', (await import('./http/routes/DataSet.js')).default)
+    .addRouter('/user', (await import('./http/routes/User.js')).default)
     .build()
     .listen(PORT, () => console.info(`server started on ${PORT}`));
