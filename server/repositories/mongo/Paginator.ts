@@ -16,7 +16,7 @@ export default class Paginator implements IPaginator<PaginationMetaData> {
     }
 
     buildMetaData (currentPage: number, totalItems: number) {
-        const pageCount = Math.floor(totalItems / this.pageSize) || 1;
+        const pageCount = Math.ceil(totalItems / this.pageSize) || 1;
 
         return {
             totalItems,

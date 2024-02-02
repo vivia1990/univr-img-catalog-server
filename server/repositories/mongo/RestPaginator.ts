@@ -10,9 +10,11 @@ export default class RestPaginator extends Paginator implements IPaginator<RestP
 
     buildMetaData (currentPage: number, totalItems: number) {
         const baseUrl = this.baseUrl;
-        const pageCount = Math.floor(totalItems / this.pageSize) || 1;
+        const meta = super.buildMetaData(currentPage, totalItems);
+        const pageCount = meta.totalPages;
+
         const obj = {
-            ...super.buildMetaData(currentPage, totalItems),
+            ...meta,
             ...{
                 links: {
                     first: `${baseUrl}?page=1`,

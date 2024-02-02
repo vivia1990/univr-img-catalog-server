@@ -62,6 +62,7 @@ test('MongoRepository', async () => {
                 data.inserted.forEach((userDb, index) => {
                     const user = users[index];
                     if (user) {
+
                         assert.equal(userDb.email, user.email);
                         assert.equal(userDb.password, user.password);
                         assert.equal(userDb.name, user.name);
@@ -158,7 +159,7 @@ test('MongoRepository', async () => {
 
             let count = 0;
             const pageSize = repo.getPaginator().getPageSize();
-            const pageCount = Math.floor(length / pageSize) || 1;
+            const pageCount = Math.ceil(length / pageSize) || 1;
             while (count++ < 5) {
                 const results = await repo.findAllPaginated({}, count);
 
@@ -176,7 +177,7 @@ test('MongoRepository', async () => {
             const baseUrl = '/user';
             repo.setPaginator(new RestPaginator('/user'));
             const pageSize = repo.getPaginator().getPageSize();
-            const pageCount = Math.floor(length / pageSize) || 1;
+            const pageCount = Math.ceil(length / pageSize) || 1;
             while (count++ < 5) {
                 const results = await repo.findAllPaginated({}, count);
 
