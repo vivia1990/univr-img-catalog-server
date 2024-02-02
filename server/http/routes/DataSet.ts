@@ -71,7 +71,7 @@ router.get('/', async (req: GetSearchReq, res: Response) => {
     res.json(ds);
 });
 
-router.post('/edit', (req: PostReq, res: Response<{id: string} | {message: string}>) => {
+router.post('/add', (req: PostReq, res: Response<{id: string} | {message: string}>) => {
     repo.insert(req.body)
         .then(data => {
             const id = data._id.toString();
@@ -88,7 +88,7 @@ router.post('/edit', (req: PostReq, res: Response<{id: string} | {message: strin
         });
 });
 
-router.put('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
+router.put('/add', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
     repo.updateById(req.body.id, req.body)
         .then(success => {
             if (!success) {
