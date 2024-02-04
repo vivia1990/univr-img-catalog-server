@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc -p ./tsconfig.json",
-    "test": "yarn tsc -p ./test/tsconfig.json",
+    "build-test": "yarn tsc -p ./test/tsconfig.json",
+    "test": "yarn build-test && yarn run-test",
     "run-test": "node --env-file=.env --test",
     "express": "yarn build && node --env-file=.env dist/server/server.js",
     "db-init": "yarn build && node --env-file=.env dist/server/db/init/init.js",
