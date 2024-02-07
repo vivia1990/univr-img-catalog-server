@@ -10,6 +10,19 @@ import { env } from '../../../server/env.js';
 import assert from 'node:assert';
 import { ObjectId } from 'mongodb';
 import { randomBytes } from 'crypto';
+import Image from '../../../server/models/Image.js';
+import { RestPaginationMetaData } from '../../../server/repositories/interfaces/Paginator.js';
+import MongoConnection from '../../../server/db/MongoConnection.js';
+
+type ApiResponse = Promise<{data: PropertiesOnly<Image>[], pagination: RestPaginationMetaData}>;
+
+MongoConnection.setConnectionParams({
+    name: 'test_upload_image',
+    address: env.DB_ADDRESS,
+    passw: env.DB_PASSW,
+    port: env.DB_PORT,
+    user: env.DB_USER
+});
 
 const path = new URL('public', `file://${process.cwd()}/`).pathname;
 const imgPath = new URL(env.IMG_STORAGE, 'file://' + path).pathname;
@@ -75,9 +88,10 @@ test('Test Upload Image', async () => {
             const response = await fetch(new URL('/image/upload', baseUrl), {
                 method: 'POST',
                 body: form
-            }).then(response => response.json() as Promise<{message: string}>);
+            }).then(response => response.json() as ApiResponse);
 
-            assert.equal(response.message, 'success');
+            assert.equal(response.data.length, 1);
+            assert.equal(response.data[0]?.name, images[0]?.name);
 
             const savedImg = await loadImages(osPath.join(imgPath, id));
             assert.equal(savedImg.length, 1);
@@ -97,9 +111,10 @@ test('Test Upload Image', async () => {
                 const response = await fetch(new URL('/image/upload', baseUrl), {
                     method: 'POST',
                     body: form
-                }).then(response => response.json() as Promise<{message: string}>);
+                }).then(response => response.json() as ApiResponse);
 
-                assert.equal(response.message, 'success');
+                assert.equal(response.data.length, 1);
+                assert.equal(response.data[0]?.name, images[0]?.name);
 
                 const savedImg = await loadImages(osPath.join(imgPath, id));
                 assert.equal(savedImg.length, 1);
@@ -128,9 +143,9 @@ test('Test Upload Image', async () => {
             const response = await fetch(new URL('/image/upload', baseUrl), {
                 method: 'POST',
                 body: form
-            }).then(response => response.json() as Promise<{message: string}>);
+            }).then(response => response.json() as ApiResponse);
 
-            assert.equal(response.message, 'success');
+            assert.equal(response.data.length, images.length);
 
             const savedImg = await loadImages(osPath.join(imgPath, id));
             assert.equal(savedImg.length, images.length);
@@ -148,6 +163,7 @@ test('Test Upload Image', async () => {
         });
     });
 
-}).finally(() => {
+}).finally(async () => {
+    await MongoConnection.closeConnection();
     server.close();
 });
