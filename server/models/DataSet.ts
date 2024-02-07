@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 
 const dsSchema = z.object({
     name: z.string().max(50),
-    images: z.object({
+    stats: z.object({
         count: z.number().min(0).default(0),
         validated: z.number().min(0).default(0)
     }),
@@ -20,7 +20,7 @@ export default class DataSet implements Model {
 
     constructor (
         public readonly name: DsSchema['name'],
-        public readonly images: DsSchema['images'] = { count: 0, validated: 0 },
+        public readonly stats: DsSchema['stats'] = { count: 0, validated: 0 },
         public readonly owners: ObjectId[],
         public readonly tags: DsSchema['tags'] = []) {}
 

@@ -5,6 +5,9 @@ import UserRepository from '../../mongo/UserRepository.js';
 import DataSetRepository from '../../mongo/DataSetRepository.js';
 import ImageRepository from '../../mongo/ImageRepository.js';
 import { IDBFactory } from '../../interfaces/DBFactory.js';
+import { ModelWithId as Model } from '../../interfaces/BaseRepository.js';
+
+export type ModelWithId<T> = Model<T, '_id', ObjectId>;
 
 export default class MongoFactory implements IDBFactory<'_id', ObjectId> {
     protected readonly client: Mongo;

@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // todo pensare a fix
 import { Db, ObjectId, Filter, InsertOneResult, Document, Collection, InsertManyResult, MongoBulkWriteError, FindOptions } from 'mongodb';
-import { BaseRepository, ModelWithId as Model, InsertedMany, PaginationResult } from '../interfaces/BaseRepository.js';
+import { BaseRepository, InsertedMany, PaginationResult } from '../interfaces/BaseRepository.js';
 import Mongo from '../../db/drivers/Mongo.js';
+import { ModelWithId } from '../factory/mongo/MongoFactory.js';
 import { IPaginator } from '../interfaces/Paginator.js';
 import Paginator from './Paginator.js';
-
-type ModelWithId<T> = Model<T, '_id', ObjectId>;
 
 export default class MongoRepository<T extends Document> implements BaseRepository<T, '_id', ObjectId> {
     protected db: Db;
@@ -29,7 +28,14 @@ export default class MongoRepository<T extends Document> implements BaseReposito
         return this.paginator;
     }
 
-    cursorPagination (item: Filter<T>, page: number) {
+    /**
+     *
+     * @param item
+     * @param page
+     * @param pipeline optional, to add more aggregation stages (es $lookup)
+     * @returns
+     */
+    cursorPagination<Model extends T = T> (item: Filter<T>, page: number, pipeline: object[] = []) {
         const pageSize = this.paginator.getPageSize();
         const filter = {
             $facet: {
@@ -39,7 +45,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
         };
 
         return this.collection
-            .aggregate<{metadata: [{totalCount: number}], data: ModelWithId<T>[]}>([{ $match: item }, filter]);
+            .aggregate<{metadata: [{totalCount: number}], data: ModelWithId<Model>[]}>([{ $match: item }, ...pipeline, filter]);
     }
 
     async findAllPaginated<Fields extends keyof T> (item: Filter<T>, page: number): Promise<PaginationResult<T, Fields, '_id', ObjectId>> {
