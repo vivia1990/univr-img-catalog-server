@@ -1,18 +1,19 @@
 import { Router, Request, Response, NextFunction } from 'express';
-/* import MongoConnection from '../../db/MongoConnection.js';
-import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js'; */
+import MongoConnection from '../../db/MongoConnection.js';
+import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js';
 import { ObjectId } from 'mongodb';
 import { env } from '../../env.js';
 import { DiskManager, Transmit, TransmitOptions } from '@quicksend/transmit';
 import { mkdir, rename } from 'fs/promises';
 import osPath from 'node:path';
+import Image from '../../models/Image.js';
 
 type FileUploadRequest = Request<unknown, never, {idDataset: string, total: string}>;
 
 const basePath = new URL(env.IMG_STORAGE, `file://${process.cwd()}/`).pathname;
 
-/* const factory = new MongoFactory(await MongoConnection.getConnection());
-const repo = factory.createImageRepo(); */
+const factory = new MongoFactory(await MongoConnection.getConnection());
+const repo = factory.createImageRepo();
 
 type UploadResp = Response<unknown, {
     files: string[],
@@ -69,8 +70,15 @@ const manager = new DiskManager({
 });
 
 router.post('/upload', upload({ manager, maxFiles: 100 }), (req: FileUploadRequest, res: UploadResp) => {
-    // const { idDataset } = res.locals.fields;
-    res.json({ message: 'success' });
+    const { idDataset } = res.locals.fields;
+    const { files } = res.locals;
+    const models = files.map(
+        name => new Image(name, idDataset + '/' + name, [], new ObjectId(idDataset)));
+
+    repo.insertMany(models).then(data => {
+        const meta = repo.getPaginator().buildMetaData(1, 100);
+        res.status(201).json({ data: data.inserted, pagination: meta });
+    });
 });
 
 export default router;
