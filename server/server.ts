@@ -8,7 +8,8 @@ import { mkdir } from 'fs/promises';
 const PORT = env.PORT;
 process.env.TZ = 'Europe/Rome';
 
-const path = new URL('public', 'file://' + process.cwd()).pathname;
+const path = new URL('public', `file://${process.cwd()}/`).pathname;
+console.log(path);
 await mkdir(path, {
     recursive: true
 }).catch(error => {
