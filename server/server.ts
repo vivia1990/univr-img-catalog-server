@@ -19,14 +19,13 @@ await mkdir(path, {
 console.info(env);
 
 // N.B. Tutti i moduli che usano la connessione con il db devono essere importati dopo, con import dinamici
-const connection = MongoConnection.setConnectionParams({
+MongoConnection.setConnectionParams({
     name: env.DB_NAME,
     address: env.DB_ADDRESS,
     passw: env.DB_PASSW,
     port: env.DB_PORT,
     user: env.DB_USER
 });
-console.info(connection);
 
 new ExpressBuilder()
     .addMiddleware((req: Request, res: Response, next: NextFunction) => {

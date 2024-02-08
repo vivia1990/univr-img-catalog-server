@@ -20,7 +20,7 @@ export default class Image implements Model {
         public readonly name: ImgSchema['name'],
         public readonly path: ImgSchema['path'],
         public tags: ImgSchema['tags'],
-        public dataset: ImgSchema['dataset']) {}
+        public dataset: ObjectId) {}
 
     getTableName (): string {
         return Image.tableName;

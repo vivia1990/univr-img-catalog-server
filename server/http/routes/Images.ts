@@ -6,14 +6,18 @@ import { env } from '../../env.js';
 import { DiskManager, Transmit, TransmitOptions } from '@quicksend/transmit';
 import { mkdir, rename } from 'fs/promises';
 import osPath from 'node:path';
-import Image from '../../models/Image.js';
+import ImageModel from '../../models/Image.js';
 
+type Image = PropertiesOnly<ImageModel>;
 type FileUploadRequest = Request<unknown, never, {idDataset: string, total: string}>;
+type PutReq = Request<never, never, Partial<Image> & {id: string}>;
 
-const basePath = new URL(env.IMG_STORAGE, `file://${process.cwd()}/`).pathname;
+type GetSearchReq = Request<unknown, unknown, unknown, Partial<Image> & {
+    page: string,
+    id: string
+}>;
 
-const factory = new MongoFactory(await MongoConnection.getConnection());
-const repo = factory.createImageRepo();
+type ImgResponse = Response<unknown, {_id: ObjectId}>;
 
 type UploadResp = Response<unknown, {
     files: string[],
@@ -24,15 +28,69 @@ type UploadResp = Response<unknown, {
 }>
 
 const router = Router();
-router.use((req: Request<unknown, unknown, unknown, {
-    page: string,
-    id: string,
-    _id: ObjectId
-}>, res: Response, next) => {
+const factory = new MongoFactory(await MongoConnection.getConnection());
+const repo = factory.createImageRepo();
+const basePath = new URL(env.IMG_STORAGE, `file://${process.cwd()}/`).pathname;
+
+router.use((req: GetSearchReq, res: ImgResponse, next) => {
     if (req.query.id) {
-        req.query._id = new ObjectId(req.query.id);
+        res.locals._id = new ObjectId(req.query.id);
     }
+
     next();
+});
+
+router.get('/:id', async (req: Request<{id: string}>, res: ImgResponse) => {
+    console.log(res.locals._id.toString());
+    const image = await repo.findById(res.locals._id.toString())
+        .then(image => {
+            if (!image) {
+                res.statusCode = 404;
+                res.json({});
+                res.end();
+            }
+
+            return image;
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusCode = 500;
+            res.json({});
+            res.end();
+        });
+
+    res.json(image);
+});
+
+const omit = ['page', 'id'];
+router.get('/', async (req: GetSearchReq, res: Response) => {
+    const filter = Object.fromEntries(
+        Object.entries(req.query).filter(([key]) => !omit.includes(key))
+    );
+
+    const ds = await repo.findAllPaginated(filter, Number(req.query.page) || 1)
+        .catch(error => console.log(error));
+    res.json(ds);
+});
+
+router.put('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
+    repo.updateById(req.body.id, req.body)
+        .then(success => {
+            if (!success) {
+                throw new Error(JSON.stringify(req.body));
+            }
+            res.statusCode = 204;
+
+            res.json({ success, message: 'ok' });
+        })
+        .catch(error => {
+            console.info(req.body);
+            console.error(error);
+            res.statusCode = 422;
+            const message = error instanceof Error ? error.message : String(error);
+
+            res.json({ success: false, message });
+        });
 });
 
 const upload = (options: Partial<TransmitOptions> = {}) => (req: FileUploadRequest, res: Response, next: NextFunction) => new Transmit(options)
@@ -73,7 +131,7 @@ router.post('/upload', upload({ manager, maxFiles: 100 }), (req: FileUploadReque
     const { idDataset } = res.locals.fields;
     const { files } = res.locals;
     const models = files.map(
-        name => new Image(name, idDataset + '/' + name, [], new ObjectId(idDataset)));
+        name => new ImageModel(name, idDataset + '/' + name, [], new ObjectId(idDataset)));
 
     repo.insertMany(models).then(data => {
         const meta = repo.getPaginator().buildMetaData(1, 100);
