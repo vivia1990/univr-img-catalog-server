@@ -1,16 +1,18 @@
 import { z } from 'zod';
 import { Model } from '../repositories/interfaces/BaseRepository.js';
-import { tagSchema } from './Tag.js';
 import { ObjectId } from 'mongodb';
 
-const dsSchema = z.object({
+export const dsSchema = z.object({
     name: z.string().max(50),
     stats: z.object({
         count: z.number().min(0).default(0),
         validated: z.number().min(0).default(0)
     }),
     owners: z.array(z.object({}).refine(value => value instanceof ObjectId)),
-    tags: z.array(tagSchema)
+    tags: z.array(z.object({
+        name: z.string().max(50),
+        img_tagged: z.number().min(0)
+    }))
 });
 
 type DsSchema = z.infer<typeof dsSchema>;

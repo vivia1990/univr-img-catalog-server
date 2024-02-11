@@ -6,7 +6,13 @@ declare global {
 
     type GetReturnType<Type> = Type extends (...args: never[]) => infer Return
         ? Return : never;
+
     type PropertiesOnly<T> = Pick<T, { [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? never : K }[keyof T]>;
+
+    type Mutable<T> = {
+        -readonly [P in keyof T]: T[P];
+    };
+
 }
 
 export type QueryFilter<T> = {

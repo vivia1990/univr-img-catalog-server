@@ -1,14 +1,22 @@
 import { Router, Request, Response } from 'express';
-import DataSet from '../../models/DataSet.js';
+import DataSet, { dsSchema } from '../../models/DataSet.js';
 import MongoConnection from '../../db/MongoConnection.js';
 import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js';
 import { ObjectId } from 'mongodb';
+import { ZodError, z } from 'zod';
 
 const factory = new MongoFactory(await MongoConnection.getConnection());
 const repo = factory.createDataSetRepo(true);
 repo.getPaginator().setPageSize(10);
 
 const router = Router();
+const patchValidator = dsSchema.omit({ owners: true })
+    .extend({
+        id: z.string().length(24),
+        owners: z.array(
+            z.string().length(24)).transform(val => val.map(val => new ObjectId(val))
+        ).optional()
+    });
 
 type GetSearchReq = Request<Record<string, never>, unknown, unknown, Partial<DataSet> & {
     page: string,
@@ -16,14 +24,14 @@ type GetSearchReq = Request<Record<string, never>, unknown, unknown, Partial<Dat
 }>;
 
 type PostReq = Request<never, never, DataSet>;
-type PutReq = Request<never, never, Partial<DataSet> & {id: string}>;
+type PutReq = Request<never, never, Partial<Mutable<DataSet>> & {id: string}>;
+type PutRes = Response<{success: boolean, message: string, error?: ZodError}>
 
 router.use((req: Request<unknown, unknown, unknown, {
     page: string,
     id: string,
     _id: ObjectId
 }>, res: Response, next) => {
-    res.setHeader('Content-Type', 'application/json');
     if (req.query.id) {
         req.query._id = new ObjectId(req.query.id);
     }
@@ -88,12 +96,14 @@ router.post('/add', (req: PostReq, res: Response<{id: string} | {message: string
         });
 });
 
-router.patch('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
-    if (!req.body.id) {
-        res.status(400).send({ success: false, message: 'id required' });
+router.patch('/edit', (req: PutReq, res: PutRes) => {
+    const result = patchValidator.safeParse(req.body);
+    if (!result.success) {
+        res.status(400).json({ success: false, message: 'errore validazione', error: result.error });
+        return;
     }
 
-    repo.updateById(req.body.id, req.body)
+    repo.updateById(result.data.id, result.data)
         .then(success => {
             if (!success) {
                 res.status(500).json({ success, message: 'Errore update' });

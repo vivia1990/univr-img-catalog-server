@@ -9,10 +9,10 @@ import UserRepository from './UserRepository.js';
 import Image from '../../models/Image.js';
 import ImageRepository from './ImageRepository.js';
 
-type DsWithImages = PropertiesOnly<DataSet> & {
+export type DataSetRecord = PropertiesOnly<DataSet> & {
     images: PaginationResult<Image, keyof Image, '_id', ObjectId>;
 }
-type PaginatedDsWithImages = PaginationResult<DsWithImages, keyof DsWithImages, '_id', ObjectId>
+type PaginatedDsWithImages = PaginationResult<DataSetRecord, keyof DataSetRecord, '_id', ObjectId>
 
 export default class DataSetRepository extends MongoRepository<PropertiesOnly<DataSet>> implements IDataSetRepository<'_id', ObjectId> {
     private userRepo: UserRepository | null;
@@ -64,7 +64,7 @@ export default class DataSetRepository extends MongoRepository<PropertiesOnly<Da
             { $addFields: { images: { $arrayElemAt: ['$images', 0] } } }
         ];
 
-        const [values] = await this.cursorPagination<DsWithImages>(filter, 1, aggrOpt)
+        const [values] = await this.cursorPagination<DataSetRecord>(filter, 1, aggrOpt)
             .toArray();
 
         return {
@@ -73,7 +73,7 @@ export default class DataSetRepository extends MongoRepository<PropertiesOnly<Da
         };
     }
 
-    async findOneWithImages (id: ObjectId): Promise<DsWithImages | null> {
+    async findOneWithImages (id: ObjectId): Promise<DataSetRecord | null> {
         const { data } = await this.findAllWithImages({ _id: id });
         if (data[0]) {
             return data[0];

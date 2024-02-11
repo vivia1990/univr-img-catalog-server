@@ -142,11 +142,7 @@ test('DataSetRepository', async () => {
         const chunkSize = 100;
         const chunks = Array<Promise<unknown>>(chunkSize);
         while (count < Math.floor(amount / chunkSize)) {
-            const images = Array.from({ length: chunkSize }, () => {
-                const img = createRandomImage();
-                img.dataset = id;
-                return img;
-            });
+            const images = Array.from({ length: chunkSize }, () => createRandomImage(3, id));
             chunks[count++] = imRepo.insertMany(images);
         }
         await Promise.all(chunks).catch(error => { throw error; });
@@ -179,6 +175,6 @@ test('DataSetRepository', async () => {
     });
 
 }).finally(async () => {
-    await (await MongoConnection.getConnection()).db.dropDatabase();
+    // await (await MongoConnection.getConnection()).db.dropDatabase();
     await MongoConnection.closeConnection();
 });
