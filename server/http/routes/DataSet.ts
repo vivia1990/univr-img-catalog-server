@@ -96,20 +96,18 @@ router.patch('/edit', (req: PutReq, res: Response<{success: boolean, message: st
     repo.updateById(req.body.id, req.body)
         .then(success => {
             if (!success) {
-                throw new Error(JSON.stringify(req.body));
+                res.status(500).json({ success, message: 'Errore update' });
+                return;
             }
-            res.statusCode = 204;
 
-            res.json({ success, message: 'ok' });
-        })
-        .catch(error => {
-            console.info(req.body);
+            res.status(200).json({ success, message: 'ok' });
+        }).catch(error => {
             console.error(error);
             const message = error instanceof Error ? error.message : String(error);
             // 422 errore non gestito
-            res.statusCode = message.toLowerCase().includes('not found') ? 404 : 422;
+            const statusCode = message.toLowerCase().includes('not found') ? 404 : 422;
 
-            res.json({ success: false, message });
+            res.status(statusCode).json({ success: false, message });
         });
 });
 
