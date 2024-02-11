@@ -6,14 +6,15 @@ import ExpressBuilder from '../../../server/ExpressBuilder.js';
 import cors from 'cors';
 import { env } from '../../../server/env.js';
 import assert from 'node:assert';
-import Image from '../../../server/models/Image.js';
 import MongoFactory from '../../../server/repositories/factory/mongo/MongoFactory.js';
 import { RestPaginationMetaData } from '../../../server/repositories/interfaces/Paginator.js';
 import MongoConnection from '../../../server/db/MongoConnection.js';
 import { createRandomImage } from '../../models/fake/Image.js';
+import { ObjectId } from 'mongodb';
+import { randomBytes } from 'node:crypto';
+import { ImageRecord } from '../../../server/repositories/mongo/ImageRepository.js';
 
-type ImageRecord = PropertiesOnly<Image> & {_id: string};
-type GetResponse = Promise<{data: ImageRecord[], pagination: RestPaginationMetaData}>;
+type GetResponse = Promise<{data: (ImageRecord & {_id: string})[], pagination: RestPaginationMetaData}>;
 
 MongoConnection.setConnectionParams({
     name: 'test_image_route',
@@ -77,7 +78,10 @@ test('ImageRoute', async () => {
             const record = response.data.find(obj => obj._id === _id.toString());
             assert.notEqual(record, undefined);
             if (record) {
-                assert.deepEqual(img.tags, record.tags);
+                img.tags.forEach((tag, index) => {
+                    assert.equal(tag.description, record.tags[index]?.description);
+                    assert.equal(tag.name, record.tags[index]?.name);
+                });
                 assert.equal(img.path, record.path);
                 assert.equal(img.name, record.name);
             }
@@ -90,10 +94,11 @@ test('ImageRoute', async () => {
             const { _id } = await imgRepo.insert(img);
 
             const tags = [
-                { name: 'aaa-bbb', description: 'gfagahfdahahaha' },
-                { name: 'aaa-ccc', description: 'gfagahfdahahaha' },
-                { name: 'aaa-ddd', description: 'gfagahfdahahaha' }
+                { _id: new ObjectId(randomBytes(12)), name: 'aaa-bbb', description: 'gfagahfdahahaha' },
+                { _id: new ObjectId(randomBytes(12)), name: 'aaa-ccc', description: 'gfagahfdahahaha' },
+                { _id: new ObjectId(randomBytes(12)), name: 'aaa-ddd', description: 'gfagahfdahahaha' }
             ];
+
             await imgRepo.updateById(_id.toString(), { tags });
 
             const url = new URL('/image', baseUrl);
@@ -102,7 +107,7 @@ test('ImageRoute', async () => {
 
             assert.equal(data.length, 1);
             data.at(0)?.tags.forEach((tag, index) => {
-                assert.deepEqual(tag, tags[index]);
+                assert.deepEqual(tag, { ...tags[index], ...{ _id: tags[index]?._id.toString() } });
             });
 
         });

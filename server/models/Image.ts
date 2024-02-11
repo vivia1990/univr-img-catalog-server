@@ -1,15 +1,13 @@
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
 import { Model } from '../repositories/interfaces/BaseRepository.js';
+import { tagSchema } from './Tag.js';
 
 const imgSchema = z.object({
     name: z.string().max(50),
     path: z.string().max(255),
     dataset: z.object({}).refine(value => value instanceof ObjectId),
-    tags: z.array(z.object({
-        name: z.string().max(20),
-        description: z.string().max(250).default('')
-    }))
+    tags: z.array(tagSchema)
 });
 
 type ImgSchema = z.infer<typeof imgSchema>;

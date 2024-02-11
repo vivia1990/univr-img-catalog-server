@@ -85,13 +85,17 @@ test('Test Upload Image', async () => {
             form.append('idDataset', id);
             form.append('total', images.length);
 
-            const response = await fetch(new URL('/image/upload', baseUrl), {
+            const { data } = await fetch(new URL('/image/upload', baseUrl), {
                 method: 'POST',
                 body: form
             }).then(response => response.json() as ApiResponse);
 
-            assert.equal(response.data.length, 1);
-            assert.equal(response.data[0]?.name, images[0]?.name);
+            assert.equal(data.length, 1);
+            assert.equal(data[0]?.name, images[0]?.name);
+            const storageUrl = osPath.sep + env.IMG_STORAGE.split(osPath.sep)
+                .filter(element => element !== '.' && element !== '..' && element !== 'public')
+                .join(osPath.sep);
+            assert.equal(data[0]?.path, osPath.join(storageUrl, id, images[0]?.name || ''));
 
             const savedImg = await loadImages(osPath.join(imgPath, id));
             assert.equal(savedImg.length, 1);

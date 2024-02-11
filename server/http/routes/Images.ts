@@ -7,10 +7,11 @@ import { DiskManager, Transmit, TransmitOptions } from '@quicksend/transmit';
 import { mkdir, rename } from 'fs/promises';
 import osPath from 'node:path';
 import ImageModel from '../../models/Image.js';
+import { ImageRecord } from '../../repositories/mongo/ImageRepository.js';
 
 type Image = PropertiesOnly<ImageModel>;
 type FileUploadRequest = Request<unknown, never, {idDataset: string, total: string}>;
-type PutReq = Request<never, never, Partial<Image> & {id: string}>;
+type PutReq = Request<never, never, Partial<PropertiesOnly<ImageRecord>> & {id: string}>;
 
 type GetSearchReq = Request<unknown, unknown, unknown, Partial<Image> & {
     page: string,
@@ -127,11 +128,15 @@ const manager = new DiskManager({
     directory: basePath
 });
 
+const storageUrl = osPath.sep + env.IMG_STORAGE.split(osPath.sep)
+    .filter(element => element !== '.' && element !== '..' && element !== 'public')
+    .join(osPath.sep);
+
 router.post('/upload', upload({ manager, maxFiles: 100 }), (req: FileUploadRequest, res: UploadResp) => {
     const { idDataset } = res.locals.fields;
     const { files } = res.locals;
     const models = files.map(
-        name => new ImageModel(name, idDataset + '/' + name, [], new ObjectId(idDataset)));
+        name => new ImageModel(name, storageUrl + '/' + idDataset + '/' + name, [], new ObjectId(idDataset)));
 
     repo.insertMany(models).then(data => {
         const meta = repo.getPaginator().buildMetaData(1, 100);
