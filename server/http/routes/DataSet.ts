@@ -88,7 +88,11 @@ router.post('/add', (req: PostReq, res: Response<{id: string} | {message: string
         });
 });
 
-router.put('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
+router.patch('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
+    if (!req.body.id) {
+        res.status(400).send({ success: false, message: 'id required' });
+    }
+
     repo.updateById(req.body.id, req.body)
         .then(success => {
             if (!success) {
@@ -101,8 +105,9 @@ router.put('/edit', (req: PutReq, res: Response<{success: boolean, message: stri
         .catch(error => {
             console.info(req.body);
             console.error(error);
-            res.statusCode = 422;
             const message = error instanceof Error ? error.message : String(error);
+            // 422 errore non gestito
+            res.statusCode = message.toLowerCase().includes('not found') ? 404 : 422;
 
             res.json({ success: false, message });
         });
