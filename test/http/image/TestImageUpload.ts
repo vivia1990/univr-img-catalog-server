@@ -92,10 +92,10 @@ test('Test Upload Image', async () => {
 
             assert.equal(data.length, 1);
             assert.equal(data[0]?.name, images[0]?.name);
-            const storageUrl = osPath.sep + env.IMG_STORAGE.split(osPath.sep)
-                .filter(element => element !== '.' && element !== '..' && element !== 'public')
-                .join(osPath.sep);
-            assert.equal(data[0]?.path, osPath.join(storageUrl, id, images[0]?.name || ''));
+            const storageUrl = Image.getStoragePath(
+                env.IMG_STORAGE, osPath.join(id, images[0]?.name || '')
+            );
+            assert.equal(data[0]?.path, storageUrl);
 
             const savedImg = await loadImages(osPath.join(imgPath, id));
             assert.equal(savedImg.length, 1);

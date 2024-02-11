@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ObjectId } from 'mongodb';
 import { Model } from '../repositories/interfaces/BaseRepository.js';
 import { tagSchema } from './Tag.js';
+import path from 'path';
 
 const imgSchema = z.object({
     name: z.string().max(50),
@@ -11,6 +12,8 @@ const imgSchema = z.object({
 });
 
 type ImgSchema = z.infer<typeof imgSchema>;
+
+const ds = path.sep;
 
 export default class Image implements Model {
     public static readonly tableName = 'image';
@@ -22,6 +25,12 @@ export default class Image implements Model {
 
     getTableName (): string {
         return Image.tableName;
+    }
+
+    static getStoragePath (baseUrl: string, fileName: string, rootDir: string = 'public') {
+        const str = baseUrl.split(ds)
+            .filter((el): el is string => el !== '.' && el !== '..' && el !== rootDir);
+        return path.join(...str, fileName);
     }
 
     validate () {
