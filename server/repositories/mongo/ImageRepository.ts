@@ -22,6 +22,7 @@ export default class ImageRepository extends MongoRepository<ImageRecord> implem
     insert (item: ImageRecord): Promise<ModelWithId<Required<ImageRecord>>> {
         const copy = { ...item };
         copy.tags = item.tags.map(this.mapTag);
+        item.dataset = new ObjectId(item.dataset);
 
         return super.insert(copy).then(result => {
             result.tags = copy.tags;
@@ -30,9 +31,10 @@ export default class ImageRepository extends MongoRepository<ImageRecord> implem
     }
 
     insertMany (items: ImageRecord[]): Promise<InsertedMany<Required<ImageRecord>, '_id', ObjectId>> {
-        const copy = structuredClone(items);
+        const copy = [...items];
         for (const item of copy) {
             item.tags = item.tags.map(this.mapTag);
+            item.dataset = new ObjectId(item.dataset);
         }
 
         return super.insertMany(copy).then(results => {
