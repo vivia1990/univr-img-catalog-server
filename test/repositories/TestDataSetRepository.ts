@@ -22,7 +22,7 @@ MongoConnection.setConnectionParams({
 });
 const factory = new MongoFactory(await MongoConnection.getConnection());
 const dsRepo = factory.createDataSetRepo();
-const imRepo = factory.createImageRepo();
+const imRepo = factory.createImageRepo(false);
 const userRepo = factory.createUserRepo();
 
 async function cleanDataSetCollection () {

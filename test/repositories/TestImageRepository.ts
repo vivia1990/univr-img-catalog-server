@@ -18,7 +18,7 @@ MongoConnection.setConnectionParams({
     user: env.DB_USER
 });
 const factory = new MongoFactory(await MongoConnection.getConnection());
-const imRepo = factory.createImageRepo();
+const imRepo = factory.createImageRepo(false);
 
 const dsRepo = factory.createDataSetRepo();
 const userRepo = factory.createUserRepo();
