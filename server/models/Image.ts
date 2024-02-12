@@ -4,11 +4,19 @@ import { Model } from '../repositories/interfaces/BaseRepository.js';
 import { tagSchema } from './Tag.js';
 import path from 'path';
 
-const imgSchema = z.object({
+export const imgSchema = z.object({
     name: z.string().max(50),
     path: z.string().max(255),
     dataset: z.object({}).refine(value => value instanceof ObjectId),
-    tags: z.array(tagSchema)
+    rects: z.array(
+        z.object({
+            tags: z.array(tagSchema),
+            description: z.string().optional(),
+            startX: z.number(),
+            startY: z.number(),
+            endX: z.number(),
+            endY: z.number()
+        })).default([])
 });
 
 type ImgSchema = z.infer<typeof imgSchema>;
@@ -20,7 +28,7 @@ export default class Image implements Model {
     constructor (
         public readonly name: ImgSchema['name'],
         public readonly path: ImgSchema['path'],
-        public tags: ImgSchema['tags'],
+        public rects: ImgSchema['rects'],
         public dataset: ObjectId) {}
 
     getTableName (): string {

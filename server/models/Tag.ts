@@ -2,14 +2,13 @@
 import { z } from 'zod';
 
 export const tagSchema = z.object({
-    name: z.string().max(50),
-    description: z.string().max(300)
+    name: z.string().max(50)
 });
 
 type TagSchema = z.infer<typeof tagSchema>;
 
 export default class Tag {
     constructor (
-        public readonly name: TagSchema['name'],
-        public readonly description: TagSchema['description']) {}
+        public readonly name: TagSchema['name']
+    ) {}
 }
