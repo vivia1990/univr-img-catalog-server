@@ -27,7 +27,11 @@ export default class MongoFactory implements IDBFactory<'_id', ObjectId> {
         return new DataSetRepository(this.client);
     }
 
-    createImageRepo () {
+    createImageRepo (withRelations: boolean) {
+        if (withRelations) {
+            return new ImageRepository(this.client, this.createDataSetRepo());
+        }
+
         return new ImageRepository(this.client);
     }
 

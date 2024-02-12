@@ -6,13 +6,12 @@ import { env } from '../../env.js';
 import { DiskManager, Transmit, TransmitOptions } from '@quicksend/transmit';
 import { mkdir, rename } from 'fs/promises';
 import osPath from 'node:path';
-import ImageModel from '../../models/Image.js';
-import { ImageRecord } from '../../repositories/mongo/ImageRepository.js';
+import ImageModel, { imgSchema } from '../../models/Image.js';
 import { join as pJoin } from 'path';
+import { ZodError, z } from 'zod';
 
 type Image = PropertiesOnly<ImageModel>;
 type FileUploadRequest = Request<unknown, never, {idDataset: string, total: string}>;
-type PutReq = Request<never, never, Partial<PropertiesOnly<ImageRecord>> & {id: string}>;
 
 type GetSearchReq = Request<unknown, unknown, unknown, Partial<Image> & {
     page: string,
@@ -31,7 +30,7 @@ type UploadResp = Response<unknown, {
 
 const router = Router();
 const factory = new MongoFactory(await MongoConnection.getConnection());
-const repo = factory.createImageRepo();
+const repo = factory.createImageRepo(true);
 const basePath = new URL(env.IMG_STORAGE, `file://${process.cwd()}/`).pathname;
 
 router.use((req: GetSearchReq, res: ImgResponse, next) => {
@@ -44,24 +43,19 @@ router.use((req: GetSearchReq, res: ImgResponse, next) => {
 
 router.get('/:id', async (req: Request<{id: string}>, res: ImgResponse) => {
     console.log(res.locals._id.toString());
-    const image = await repo.findById(res.locals._id.toString())
+    repo.findById(res.locals._id.toString())
         .then(image => {
             if (!image) {
-                res.statusCode = 404;
-                res.json({});
-                res.end();
+                res.status(404).json({ message: 'not found' });
+                return;
             }
 
-            return image;
+            res.json(image);
         })
         .catch(error => {
             console.log(error);
-            res.statusCode = 500;
-            res.json({});
-            res.end();
+            res.status(500).json({});
         });
-
-    res.json(image);
 });
 
 const omit = ['page', 'id'];
@@ -75,23 +69,38 @@ router.get('/', async (req: GetSearchReq, res: Response) => {
     res.json(ds);
 });
 
-router.put('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
-    repo.updateById(req.body.id, req.body)
+const patchValidator = imgSchema.partial()
+    .omit({ dataset: true })
+    .extend({
+        id: z.string().length(24),
+        dataset: z.string().length(24).transform(value => new ObjectId(value))
+            .optional()
+    });
+type PatchReq = Request<never, never, z.infer<typeof patchValidator>>;
+type PatchRes = Response<{success: boolean, message: string, error?: ZodError}>
+
+router.patch('/edit', (req: PatchReq, res: PatchRes) => {
+    const result = patchValidator.safeParse(req.body);
+    if (!result.success) {
+        res.status(400).json({ success: false, message: 'errore validazione', error: result.error });
+        return;
+    }
+
+    repo.updateById(result.data.id, result.data)
         .then(success => {
             if (!success) {
-                throw new Error(JSON.stringify(req.body));
+                res.status(500).json({ success, message: 'Errore update' });
+                return;
             }
-            res.statusCode = 204;
 
-            res.json({ success, message: 'ok' });
-        })
-        .catch(error => {
-            console.info(req.body);
+            res.status(200).json({ success, message: 'ok' });
+        }).catch(error => {
             console.error(error);
-            res.statusCode = 422;
             const message = error instanceof Error ? error.message : String(error);
+            // 422 errore non gestito
+            const statusCode = message.toLowerCase().includes('not found') ? 404 : 422;
 
-            res.json({ success: false, message });
+            res.status(statusCode).json({ success: false, message });
         });
 });
 
