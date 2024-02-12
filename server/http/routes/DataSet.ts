@@ -11,7 +11,7 @@ repo.getPaginator().setPageSize(10);
 
 const router = Router();
 const patchValidator = dsSchema.partial()
-    .omit({ owners: true })
+    .omit({ owners: true, stats: true })
     .extend({
         id: z.string().length(24),
         owners: z.array(
