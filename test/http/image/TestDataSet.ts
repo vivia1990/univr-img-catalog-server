@@ -155,7 +155,7 @@ test('DataSet Route', async () => {
                 headers: {
                     'Content-Type': 'application/json; charset=utf-8'
                 },
-                body: JSON.stringify({ ...{ id: _id }, ...ds })
+                body: JSON.stringify({ id: _id, owners: ds.owners })
             });
             assert.equal(response.ok, true);
             assert.equal(response.status, 200);

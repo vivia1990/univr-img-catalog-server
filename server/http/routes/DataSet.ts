@@ -10,7 +10,8 @@ const repo = factory.createDataSetRepo(true);
 repo.getPaginator().setPageSize(10);
 
 const router = Router();
-const patchValidator = dsSchema.omit({ owners: true })
+const patchValidator = dsSchema.partial()
+    .omit({ owners: true })
     .extend({
         id: z.string().length(24),
         owners: z.array(
