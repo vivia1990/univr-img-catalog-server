@@ -11,7 +11,8 @@ export const dsSchema = z.object({
     owners: z.array(z.object({}).refine(value => value instanceof ObjectId)),
     tags: z.array(z.object({
         name: z.string().max(50),
-        img_tagged: z.number().min(0)
+        img_tagged: z.number().min(0).optional()
+            .default(0)
     }))
 });
 
