@@ -42,8 +42,7 @@ router.use((req: GetSearchReq, res: ImgResponse, next) => {
 });
 
 router.get('/:id', async (req: Request<{id: string}>, res: ImgResponse) => {
-    console.log(res.locals._id.toString());
-    repo.findById(res.locals._id.toString())
+    repo.findById(req.params.id)
         .then(image => {
             if (!image) {
                 res.status(404).json({ message: 'not found' });
