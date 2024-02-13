@@ -44,7 +44,7 @@ export default class DataSetRepository extends MongoRepository<PropertiesOnly<Da
         return this.userRepo.findAllPaginated({ ...filter, ...query.filter || {} }, query.page || 1);
     }
 
-    async findAllWithImages (filter: Filter<PropertiesOnly<DataSet>> = {}): Promise<PaginatedDsWithImages> {
+    async findAllWithImages (filter: Filter<PropertiesOnly<DataSet>> = {}, page: number = 1): Promise<PaginatedDsWithImages> {
         const aggrOpt = [
             {
                 $lookup: {
@@ -64,7 +64,7 @@ export default class DataSetRepository extends MongoRepository<PropertiesOnly<Da
             { $addFields: { images: { $arrayElemAt: ['$images', 0] } } }
         ];
 
-        const [values] = await this.cursorPagination<DataSetRecord>(filter, 1, aggrOpt)
+        const [values] = await this.cursorPagination<DataSetRecord>(filter, page, aggrOpt)
             .toArray();
 
         return {

@@ -75,7 +75,7 @@ router.get('/', async (req: GetSearchReq, res: Response) => {
         Object.entries(req.query).filter(([key]) => !omit.includes(key))
     );
 
-    const ds = await repo.findAllPaginated(filter, Number(req.query.page) || 1)
+    const ds = await repo.findAllWithImages(filter, Number(req.query.page) || 1)
         .catch(error => console.log(error));
     res.json(ds);
 });
