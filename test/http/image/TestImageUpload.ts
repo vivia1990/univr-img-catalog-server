@@ -13,6 +13,8 @@ import { randomBytes } from 'crypto';
 import Image from '../../../server/models/Image.js';
 import { RestPaginationMetaData } from '../../../server/repositories/interfaces/Paginator.js';
 import MongoConnection from '../../../server/db/MongoConnection.js';
+import MongoFactory from '../../../server/repositories/factory/mongo/MongoFactory.js';
+import { createRandomDataSet } from '../../models/fake/DataSet.js';
 
 type ApiResponse = Promise<{data: PropertiesOnly<Image>[], pagination: RestPaginationMetaData}>;
 
@@ -23,6 +25,9 @@ MongoConnection.setConnectionParams({
     port: env.DB_PORT,
     user: env.DB_USER
 });
+
+const dsRepo = new MongoFactory(await MongoConnection.getConnection())
+    .createDataSetRepo(false);
 
 const path = new URL('public', `file://${process.cwd()}/`).pathname;
 const imgPath = new URL(env.IMG_STORAGE, 'file://' + path).pathname;
@@ -136,11 +141,11 @@ test('Test Upload Image', async () => {
     await it('Upload multiple image', async t => {
 
         await t.test('Simple image', async () => {
-            const id = new ObjectId(randomBytes(12)).toString();
+            const { _id } = await dsRepo.insert(createRandomDataSet());
             const form = new FormData();
             for (const image of images) {
                 form.append('images', image);
-                form.append('idDataset', id);
+                form.append('idDataset', _id.toString());
                 form.append('total', images.length);
             }
 
@@ -151,7 +156,7 @@ test('Test Upload Image', async () => {
 
             assert.equal(response.data.length, images.length);
 
-            const savedImg = await loadImages(osPath.join(imgPath, id));
+            const savedImg = await loadImages(osPath.join(imgPath, _id.toString()));
             assert.equal(savedImg.length, images.length);
 
             const sorter = (a: File, b: File) => a.name.localeCompare(b.name);
