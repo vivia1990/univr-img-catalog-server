@@ -3,20 +3,30 @@ import ExpressBuilder from './ExpressBuilder.js';
 import { Request, Response, json, NextFunction } from 'express';
 import { env } from './env.js';
 import MongoConnection from './db/MongoConnection.js';
+import { mkdir } from 'fs/promises';
 
 const PORT = env.PORT;
 process.env.TZ = 'Europe/Rome';
 
+const path = new URL('public', `file://${process.cwd()}/`).pathname;
+console.log(path);
+await mkdir(path, {
+    recursive: true
+}).catch(error => {
+    console.error('Impossibile creare path ' + path);
+    throw error;
+});
+
 console.info(env);
+
 // N.B. Tutti i moduli che usano la connessione con il db devono essere importati dopo, con import dinamici
-const connection = MongoConnection.setConnectionParams({
+MongoConnection.setConnectionParams({
     name: env.DB_NAME,
     address: env.DB_ADDRESS,
     passw: env.DB_PASSW,
     port: env.DB_PORT,
     user: env.DB_USER
 });
-console.info(connection);
 
 new ExpressBuilder()
     .addMiddleware((req: Request, res: Response, next: NextFunction) => {
@@ -33,5 +43,7 @@ new ExpressBuilder()
     })
     .addRouter('/dataset', (await import('./http/routes/DataSet.js')).default)
     .addRouter('/user', (await import('./http/routes/User.js')).default)
+    .addRouter('/image', (await import('./http/routes/Images.js')).default)
+    .addStaticPath('', path)
     .build()
     .listen(PORT, () => console.info(`server started on ${PORT}`));

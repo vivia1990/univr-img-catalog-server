@@ -1,14 +1,23 @@
 import { Router, Request, Response } from 'express';
-import DataSet from '../../models/DataSet.js';
+import DataSet, { dsSchema } from '../../models/DataSet.js';
 import MongoConnection from '../../db/MongoConnection.js';
 import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js';
 import { ObjectId } from 'mongodb';
+import { ZodError, z } from 'zod';
 
 const factory = new MongoFactory(await MongoConnection.getConnection());
 const repo = factory.createDataSetRepo(true);
 repo.getPaginator().setPageSize(10);
 
 const router = Router();
+const patchValidator = dsSchema.partial()
+    .omit({ owners: true, stats: true })
+    .extend({
+        id: z.string().length(24),
+        owners: z.array(
+            z.string().length(24)).transform(val => val.map(val => new ObjectId(val))
+        ).optional()
+    });
 
 type GetSearchReq = Request<Record<string, never>, unknown, unknown, Partial<DataSet> & {
     page: string,
@@ -16,14 +25,14 @@ type GetSearchReq = Request<Record<string, never>, unknown, unknown, Partial<Dat
 }>;
 
 type PostReq = Request<never, never, DataSet>;
-type PutReq = Request<never, never, Partial<DataSet> & {id: string}>;
+type PutReq = Request<never, never, Partial<Mutable<DataSet>> & {id: string}>;
+type PutRes = Response<{success: boolean, message: string, error?: ZodError}>
 
 router.use((req: Request<unknown, unknown, unknown, {
     page: string,
     id: string,
     _id: ObjectId
 }>, res: Response, next) => {
-    res.setHeader('Content-Type', 'application/json');
     if (req.query.id) {
         req.query._id = new ObjectId(req.query.id);
     }
@@ -66,7 +75,7 @@ router.get('/', async (req: GetSearchReq, res: Response) => {
         Object.entries(req.query).filter(([key]) => !omit.includes(key))
     );
 
-    const ds = await repo.findAllPaginated(filter, Number(req.query.page) || 1)
+    const ds = await repo.findAllWithImages(filter, Number(req.query.page) || 1)
         .catch(error => console.log(error));
     res.json(ds);
 });
@@ -87,23 +96,28 @@ router.post('/add', (req: PostReq, res: Response< unknown | {message: string}>) 
         });
 });
 
-router.put('/edit', (req: PutReq, res: Response<{success: boolean, message: string}>) => {
-    repo.updateById(req.body.id, req.body)
+router.patch('/edit', (req: PutReq, res: PutRes) => {
+    const result = patchValidator.safeParse(req.body);
+    if (!result.success) {
+        res.status(400).json({ success: false, message: 'errore validazione', error: result.error });
+        return;
+    }
+
+    repo.updateById(result.data.id, result.data)
         .then(success => {
             if (!success) {
-                throw new Error(JSON.stringify(req.body));
+                res.status(500).json({ success, message: 'Errore update' });
+                return;
             }
-            res.statusCode = 204;
 
-            res.json({ success, message: 'ok' });
-        })
-        .catch(error => {
-            console.info(req.body);
+            res.status(200).json({ success, message: 'ok' });
+        }).catch(error => {
             console.error(error);
-            res.statusCode = 422;
             const message = error instanceof Error ? error.message : String(error);
+            // 422 errore non gestito
+            const statusCode = message.toLowerCase().includes('not found') ? 404 : 422;
 
-            res.json({ success: false, message });
+            res.status(statusCode).json({ success: false, message });
         });
 });
 

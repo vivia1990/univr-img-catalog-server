@@ -30,7 +30,12 @@ Follow these instructions to get the project up and running.
         docker compose start # if you have already built the containers
     ```
 
-5. Run the server
+5. Init the db
+    ```bash
+        yarn db-init
+    ```
+
+6. Run the server
     ```bash
         yarn express
     ```
@@ -46,7 +51,7 @@ Test are based on builtin Node's testing suite (starting from node 20) <br>
 Run with:
 1. Build the test
     ```bash
-    yarn test # build the test
+    yarn build-test # build the test
     ```
 2. Run the related services (mongodb)
     ```bash
@@ -55,6 +60,9 @@ Run with:
     ```
 3. Run the tests:
     ```bash
-     yarn run-test {args} dist-test/ path_to_folder
+     yarn run-test {args} dist-test/{path_to_folder}
+     
+     # or build and run
+    yarn test {args} dist-test/{path_to_folder}
     ```
 By **Default** all file named `Test` will be run

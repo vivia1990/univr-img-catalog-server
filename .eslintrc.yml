@@ -4,6 +4,7 @@ env:
   node: true
   es2022: true
 extends: 
+  - eslint:recommended
   - standard
   - plugin:@typescript-eslint/eslint-recommended
   - plugin:@typescript-eslint/recommended

@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc -p ./tsconfig.json",
-    "test": "yarn tsc -p ./test/tsconfig.json",
+    "build-test": "yarn tsc -p ./test/tsconfig.json",
+    "test": "yarn build-test && yarn run-test",
     "run-test": "node --env-file=.env --test",
     "express": "yarn build && node --env-file=.env dist/server/server.js",
     "db-init": "yarn build && node --env-file=.env dist/server/db/init/init.js",
@@ -13,6 +14,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@quicksend/transmit": "^3.0.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "module-alias": "^2.2.3",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.3.1",
+    "@types/busboy": "^1.5.3",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.5",

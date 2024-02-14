@@ -8,5 +8,6 @@ export type ImageFk = Image & {
 
 export interface IImageRepository<IDKEY extends string, IDTYPE extends object>
 extends BaseRepository<Image, IDKEY, IDTYPE> {
-    dataset(): Promise<ModelWithId<Partial<DataSet>, IDKEY, IDTYPE>>
+    dataset(idDataset: string): Promise<ModelWithId<Partial<PropertiesOnly<DataSet>>, IDKEY, IDTYPE>>
+    checkTag(tagName: string, image: Image): Promise<boolean>
 }

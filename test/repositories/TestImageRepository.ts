@@ -18,7 +18,7 @@ MongoConnection.setConnectionParams({
     user: env.DB_USER
 });
 const factory = new MongoFactory(await MongoConnection.getConnection());
-const imRepo = factory.createImageRepo();
+const imRepo = factory.createImageRepo(false);
 
 const dsRepo = factory.createDataSetRepo();
 const userRepo = factory.createUserRepo();
@@ -71,7 +71,7 @@ test('ImageRepository', async () => {
                 const images = Array(100);
                 for (let index = 0; index < 100; index++) {
                     const img = createRandomImage();
-                    img.datasets = ds._id;
+                    img.dataset = ds._id;
                     images[index] = img;
                 }
                 chunks[count++] = imRepo.insertMany(images);

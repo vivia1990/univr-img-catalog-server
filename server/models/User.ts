@@ -26,4 +26,4 @@ export default class User implements Model {
     validate () {
         return userSchema.safeParse(this);
     }
-};
+}

@@ -8,6 +8,8 @@ import { createRandomUser } from '../models/fake/User.js';
 import { env } from '../../server/env.js';
 import DataSet from '../../server/models/DataSet.js';
 import { MongoServerError, ObjectId } from 'mongodb';
+import Image from '../../server/models/Image.js';
+import { createRandomImage } from '../models/fake/Image.js';
 
 type PrUserType = PromiseFulfilledResult<GetReturnType<typeof createRandomUser> & {_id: ObjectId}>;
 
@@ -20,13 +22,18 @@ MongoConnection.setConnectionParams({
 });
 const factory = new MongoFactory(await MongoConnection.getConnection());
 const dsRepo = factory.createDataSetRepo();
-
+const imRepo = factory.createImageRepo(false);
 const userRepo = factory.createUserRepo();
 
 async function cleanDataSetCollection () {
     const connection = await MongoConnection.getConnection();
     await connection.db.dropCollection(DataSet.tableName).catch(error => { throw error; });
     await DataSetCollection(connection);
+}
+
+async function cleanImgCollection () {
+    const connection = await MongoConnection.getConnection();
+    await connection.db.dropCollection(Image.tableName).catch(error => { throw error; });
 }
 
 test('DataSetRepository', async () => {
@@ -122,7 +129,52 @@ test('DataSetRepository', async () => {
 
     });
 
+    await cleanDataSetCollection();
+    await cleanImgCollection();
+
+    async function insertImages (amount: number): Promise<ObjectId> {
+        const user = await userRepo.insert(createRandomUser());
+
+        const ds = new DataSet('dataset-1', { count: 0, validated: 0 }, [user._id]);
+        const { _id: id } = await dsRepo.insert(ds);
+
+        let count = 0;
+        const chunkSize = 100;
+        const chunks = Array<Promise<unknown>>(chunkSize);
+        while (count < Math.floor(amount / chunkSize)) {
+            const images = Array.from({ length: chunkSize }, () => createRandomImage(3, id));
+            chunks[count++] = imRepo.insertMany(images);
+        }
+        await Promise.all(chunks).catch(error => { throw error; });
+
+        ds.stats.count = amount;
+        await dsRepo.updateById(id.toString(), ds);
+
+        return id;
+    }
+
+    await it('Fetch with images', async t => {
+
+        const ids = await Promise.all([
+            insertImages(1000),
+            insertImages(1000),
+            insertImages(1000)
+        ]).catch(error => { throw error; });
+
+        await t.test('Fetch single dataset', async () => {
+            const data = await dsRepo.findOneWithImages(ids[0]);
+            assert.equal(data?.images.data.length, 1000);
+        });
+
+        await t.test('Fetch all dataset', async () => {
+            const data = await dsRepo.findAllWithImages();
+            assert.equal(data.data.length, 3);
+            data.data.forEach(ds => assert.equal(ds.images.data.length, 1000));
+        });
+
+    });
+
 }).finally(async () => {
-    await (await MongoConnection.getConnection()).db.dropDatabase();
+    // await (await MongoConnection.getConnection()).db.dropDatabase();
     await MongoConnection.closeConnection();
 });
