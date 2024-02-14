@@ -95,7 +95,7 @@ test('ImageRoute', async () => {
             const rects: ImageRecord['rects'] = [
                 { _id: new ObjectId(randomBytes(12)), endX: 1, endY: 2, startX: 3, startY: 4, tags: [{ name: 'aaa-bbb' }, { name: 'aaa-ccc' }] },
                 { _id: new ObjectId(randomBytes(12)), endX: 1, endY: 2, startX: 3, startY: 4, tags: [{ name: 'aaa-bbb' }] },
-                { _id: new ObjectId(randomBytes(12)), endX: 1, endY: 2, startX: 3, startY: 4, tags: [{ name: 'aaa-bbb' }, { name: 'aaa-eee' }] }
+                { endX: 1, endY: 2, startX: 3, startY: 4, tags: [{ name: 'aaa-bbb' }, { name: 'aaa-eee' }] }
             ];
 
             await imgRepo.updateById(_id.toString(), { rects });
@@ -105,9 +105,10 @@ test('ImageRoute', async () => {
             const { data } = await fetch(url).then(response => response.json() as Promise<GetResponse>);
 
             assert.equal(data.length, 1);
-            data.at(0)?.rects.forEach((rect, index) => {
-                assert.deepEqual(rect, { ...rects[index], ...{ _id: rects[index]!._id!.toString() } });
+            data.at(0)?.rects.slice(0, 2).forEach((rect, index) => {
+                assert.deepEqual(rect, { ...rects[index], ...{ _id: rects[index]?._id?.toString() } });
             });
+            assert.notEqual(data.at(0)?.rects.at(2)?._id, undefined);
 
         });
     });
