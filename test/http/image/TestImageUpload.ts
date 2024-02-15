@@ -4,7 +4,6 @@ import { test, it } from 'node:test';
 import { json } from 'express';
 import ExpressBuilder from '../../../server/ExpressBuilder.js';
 import cors from 'cors';
-import { opendir, readFile } from 'fs/promises';
 import osPath from 'node:path';
 import { env } from '../../../server/env.js';
 import assert from 'node:assert';
@@ -15,6 +14,7 @@ import { RestPaginationMetaData } from '../../../server/repositories/interfaces/
 import MongoConnection from '../../../server/db/MongoConnection.js';
 import MongoFactory from '../../../server/repositories/factory/mongo/MongoFactory.js';
 import { createRandomDataSet } from '../../models/fake/DataSet.js';
+import { loadImages } from '../../db/seed/DatasetAndImages.js';
 
 type ApiResponse = Promise<{data: PropertiesOnly<Image>[], pagination: RestPaginationMetaData}>;
 
@@ -50,25 +50,6 @@ const server = new ExpressBuilder()
     .addStaticPath('', path)
     .build()
     .listen(env.PORT, () => console.info('server started on' + env.PORT + ' \n\n'));
-
-async function loadImages (directory: string) {
-    const files = [];
-    const dir = await opendir(directory);
-
-    for await (const dirent of dir) {
-        if (!dirent.isFile()) {
-            continue;
-        }
-
-        const path = osPath.join(dirent.path, dirent.name);
-        files.push(new Promise<File>(resolve => {
-            readFile(path)
-                .then(content => resolve(new File([new Blob([content])], dirent.name)));
-        }));
-    }
-
-    return await Promise.all(files);
-}
 
 const { pathname } = new URL('data', import.meta.url);
 const baseUrl = `http://localhost:${env.PORT}`;

@@ -1,6 +1,6 @@
 import { env } from '../../../server/env.js';
 import MongoConnection from '../../../server/db/MongoConnection.js';
-import { seedDataSet, seedUser } from './Models.js';
+import { seedDb } from './DatasetAndImages.js';
 
 MongoConnection.setConnectionParams({
     name: env.DB_NAME,
@@ -10,8 +10,7 @@ MongoConnection.setConnectionParams({
     user: env.DB_USER
 });
 
-await Promise.all([
-    seedDataSet(),
-    seedUser()
-]).then(() => console.log('db seeded'))
+await Promise.all([seedDb(await MongoConnection.getConnection(), env.IMG_STORAGE)])
+    .then(() => console.log('db seeded'))
+    .catch(error => console.error(error))
     .finally(async () => await MongoConnection.closeConnection());

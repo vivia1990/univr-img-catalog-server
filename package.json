@@ -10,7 +10,7 @@
     "run-test": "node --env-file=.env --test",
     "express": "yarn build && node --env-file=.env dist/server/server.js",
     "db-init": "yarn build && node --env-file=.env dist/server/db/init/init.js",
-    "db-seed": "yarn test && node --env-file=.env dist-test/test/db/seed/seed.js"
+    "db-seed": "yarn build-test && node --env-file=.env dist-test/test/db/seed/seed.js"
   },
   "type": "module",
   "dependencies": {

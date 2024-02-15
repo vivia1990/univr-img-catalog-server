@@ -24,6 +24,31 @@ export function createRandomImage (rectsCount: number = 5, idDataset: ObjectId |
     );
 }
 
+export function createRandomRect (dataSetTags?: string[]): Image['rects'][number] {
+    let tags;
+    if (!dataSetTags?.length) {
+        tags = faker.helpers.multiple(() => ({ name: faker.internet.domainWord() }),
+            { count: faker.number.int({ max: 15, min: 0 }) });
+    } else {
+        const { length } = dataSetTags;
+        tags = dataSetTags.slice(faker.number.int({ max: length, min: 0 }))
+            .map(name => ({ name }));
+    }
+
+    return {
+        endX: faker.number.int({ max: 600, min: 0 }),
+        endY: faker.number.int({ max: 600, min: 0 }),
+        startY: faker.number.int({ max: 600, min: 0 }),
+        startX: faker.number.int({ max: 600, min: 0 }),
+        description: faker.commerce.productDescription(),
+        tags
+    };
+}
+
+export function createMultipleRandomRects (count: number, dataSetTags?: string[]) {
+    return faker.helpers.multiple(createRandomRect.bind(null, dataSetTags), { count });
+}
+
 export function createMultipleRandomImage (count: number): Image[] {
     return faker.helpers.multiple(createRandomImage, { count });
 }

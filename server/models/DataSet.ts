@@ -12,7 +12,6 @@ export const dsSchema = z.object({
     tags: z.array(z.object({
         name: z.string().max(50),
         img_tagged: z.number().min(0).optional()
-            .default(0)
     }))
 });
 
