@@ -4,7 +4,7 @@ import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js';
 import { ObjectId } from 'mongodb';
 import { env } from '../../env.js';
 import { DiskManager, Transmit, TransmitOptions } from '@quicksend/transmit';
-import { mkdir, rename } from 'fs/promises';
+import { mkdir, rename, unlink } from 'fs/promises';
 import osPath from 'node:path';
 import ImageModel, { imgSchema } from '../../models/Image.js';
 import { join as pJoin } from 'path';
@@ -151,6 +151,35 @@ router.post('/upload', upload({ manager, maxFiles: 100 }), (req: FileUploadReque
     repo.insertMany(models).then(data => {
         const meta = repo.getPaginator().buildMetaData(1, 100);
         res.status(201).json({ data: data.inserted, pagination: meta });
+    });
+});
+
+type DelRequest = Request<unknown, unknown, {id: string, path: string}, unknown>;
+type DelResponse = Response<{ success: boolean, message: string }>
+router.delete('/image/delete', async (req: DelRequest, res: DelResponse) => {
+    const imgId = req.body.id;
+    await repo.deleteById(imgId)
+        .then(success => {
+            if (!success) {
+                res.statusCode = 404;
+                res.json({ success: false, message: 'error' });
+                res.end();
+
+                return;
+            }
+            res.statusCode = 200;
+            res.json({ success: true, message: 'ok' });
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusCode = 500;
+            res.json({ success: false, message: 'error' });
+            res.end();
+        });
+
+    const imagePath = req.body.path;
+    await unlink('./public/' + imagePath).catch(error => {
+        console.error(error);
     });
 });
 
