@@ -26,7 +26,7 @@ export default class DataSetRepository extends MongoRepository<PropertiesOnly<Da
 
     images<Fields extends keyof Image = keyof Image> (idDataset: ObjectId, query: QueryFilter<Image> = {}): Promise<PaginationResult<Image, Fields, '_id', ObjectId>> {
         if (!this.imgRepo) {
-            return Promise.reject(new Error('Istanziato senza relazioni'));
+            throw new Error('Istanziato senza relazioni');
         }
 
         const filter: Filter<Image> = { dataset: idDataset };
@@ -36,7 +36,7 @@ export default class DataSetRepository extends MongoRepository<PropertiesOnly<Da
 
     users (idDataset: ObjectId, query: QueryFilter<User> = {}): Promise<PaginationResult<User, keyof User, '_id', ObjectId>> {
         if (!this.userRepo) {
-            return Promise.reject(new Error('Istanziato senza relazioni'));
+            throw new Error('relazione mancante');
         }
 
         const filter: Filter<User> = { datasets: { $in: [new ObjectId(idDataset)] } };

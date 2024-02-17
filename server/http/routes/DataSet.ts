@@ -4,6 +4,9 @@ import MongoConnection from '../../db/MongoConnection.js';
 import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js';
 import { ObjectId } from 'mongodb';
 import { ZodError, z } from 'zod';
+import { unlink } from 'node:fs/promises';
+import osPath from 'path';
+import { env } from '../../env.js';
 
 const factory = new MongoFactory(await MongoConnection.getConnection());
 const repo = factory.createDataSetRepo(true);
@@ -118,6 +121,80 @@ router.patch('/edit', (req: PutReq, res: PutRes) => {
             const statusCode = message.toLowerCase().includes('not found') ? 404 : 422;
 
             res.status(statusCode).json({ success: false, message });
+        });
+});
+
+type DelRequest = Request<unknown, unknown, {id: string}, unknown>;
+type DelResponse = Response<{ success: boolean, message: string, id?: string }>
+
+async function * getDsImages (idDataset: ObjectId) {
+    let page = 1;
+    while (true) {
+        yield (await repo.images(idDataset, { page: page++ }));
+    }
+}
+
+const getRootPath = (path: string):string => {
+    const { pathname } = new URL(path, 'file://');
+    return pathname.split('/').at(1) || '';
+};
+
+const rootPath = getRootPath(env.IMG_STORAGE) + osPath.sep;
+async function deleteImages (idDataset: ObjectId) {
+    const it = getDsImages(idDataset);
+    const imRepo = factory.createImageRepo(false);
+
+    for await (const imgs of it) {
+        const { data, pagination } = imgs;
+        const paths = data.map(img => img.path);
+
+        setTimeout(() => {
+            for (const path of paths) {
+                unlink(rootPath + osPath.sep + path)
+                    .catch(() => console.error('errore eliminazione: ' + path));
+            }
+        }, 0);
+
+        if (pagination.currentPage === pagination.totalPages) {
+            return [];
+        }
+    }
+
+    return imRepo.deleteMany({ dataset: idDataset });
+}
+
+router.delete('/delete', async (req: DelRequest, res: DelResponse) => {
+    const dsId = req.body.id;
+    if (!dsId) {
+        res.status(400).json({ success: false, message: 'id mancante' });
+        return;
+    }
+
+    const result = await deleteImages(new ObjectId(dsId));
+    if (result instanceof Error) {
+        res.statusCode = 500;
+        res.json({ success: false, message: result.message });
+
+        return;
+    }
+
+    await repo.deleteById(dsId)
+        .then(success => {
+            if (!success) {
+                res.statusCode = 404;
+                res.json({ success: false, message: 'error' });
+                res.end();
+
+                return;
+            }
+            res.statusCode = 200;
+            res.json({ id: req.body.id, message: 'ok', success: true });
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusCode = 500;
+            res.json({ success: false, message: 'error' });
+            res.end();
         });
 });
 

@@ -130,7 +130,7 @@ export default class MongoRepository<T extends Document> implements BaseReposito
                 return result.deletedCount;
             }
 
-            throw new Error('Record non cancellati');
+            return new Error('Record non cancellati');
         });
     }
 
