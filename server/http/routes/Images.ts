@@ -13,6 +13,9 @@ import { ZodError, z } from 'zod';
 type Image = PropertiesOnly<ImageModel>;
 type FileUploadRequest = Request<unknown, never, {idDataset: string, total: string}>;
 
+type DelRequest = Request<unknown, unknown, {id: string, path: string}, unknown>;
+type DelResponse = Response<{ success: boolean, message: string }>
+
 type GetSearchReq = Request<unknown, unknown, unknown, Partial<Image> & {
     page: string,
     id: string
@@ -154,9 +157,13 @@ router.post('/upload', upload({ manager, maxFiles: 100 }), (req: FileUploadReque
     });
 });
 
-type DelRequest = Request<unknown, unknown, {id: string, path: string}, unknown>;
-type DelResponse = Response<{ success: boolean, message: string }>
-router.delete('/image/delete', async (req: DelRequest, res: DelResponse) => {
+const getRootPath = (path: string):string => {
+    const { pathname } = new URL(path, 'file://');
+    return pathname.split('/').at(1) || '';
+};
+
+const rootPath = getRootPath(env.IMG_STORAGE) + osPath.sep;
+router.delete('/delete', async (req: DelRequest, res: DelResponse) => {
     const imgId = req.body.id;
     await repo.deleteById(imgId)
         .then(success => {
@@ -178,7 +185,8 @@ router.delete('/image/delete', async (req: DelRequest, res: DelResponse) => {
         });
 
     const imagePath = req.body.path;
-    await unlink('./public/' + imagePath).catch(error => {
+    await unlink(rootPath + imagePath).catch(error => {
+        console.info('Server: ');
         console.error(error);
     });
 });
