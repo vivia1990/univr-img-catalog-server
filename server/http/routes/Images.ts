@@ -14,7 +14,7 @@ type Image = PropertiesOnly<ImageModel>;
 type FileUploadRequest = Request<unknown, never, {idDataset: string, total: string}>;
 
 type DelRequest = Request<unknown, unknown, {id: string, path: string}, unknown>;
-type DelResponse = Response<{ success: boolean, message: string }>
+type DelResponse = Response<{ success: boolean, message: string, id?: string }>
 
 type GetSearchReq = Request<unknown, unknown, unknown, Partial<Image> & {
     page: string,
@@ -175,7 +175,7 @@ router.delete('/delete', async (req: DelRequest, res: DelResponse) => {
                 return;
             }
             res.statusCode = 200;
-            res.json({ success: true, message: 'ok' });
+            res.json({ success: true, message: 'ok', id: imgId });
         })
         .catch(error => {
             console.log(error);

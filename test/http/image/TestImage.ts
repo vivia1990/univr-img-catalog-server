@@ -141,10 +141,11 @@ test('ImageRoute', async () => {
                 headers: {
                     'Content-Type': 'application/json; charset=utf-8'
                 }
-            }).then(res => res.json() as Promise<{ success: boolean, message: string }>);
+            }).then(res => res.json() as Promise<{ success: boolean, message: string, id?: string }>);
 
             assert.equal(response.success, true);
             assert.equal(response.message, 'ok');
+            assert.equal(response.id, _id);
 
             await new Promise(resolve => {
                 setTimeout(async () => {
@@ -182,10 +183,11 @@ test('ImageRoute', async () => {
                 headers: {
                     'Content-Type': 'application/json; charset=utf-8'
                 }
-            }).then(res => res.json() as Promise<{ success: boolean, message: string }>);
+            }).then(res => res.json() as Promise<{ success: boolean, message: string, id?: string }>);
 
             assert.equal(response.success, true);
             assert.equal(response.message, 'ok');
+            assert.equal(response.id, _id);
 
             await new Promise(resolve => {
                 setTimeout(async () => {
