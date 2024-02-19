@@ -15,19 +15,20 @@ export default class MongoFactory implements IDBFactory<'_id', ObjectId> {
         this.client = client;
     }
 
-    createUserRepo () {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    createUserRepo (withRelations: boolean = false) {
         return new UserRepository(this.client);
     }
 
-    createDataSetRepo (withRelations: boolean = false) {
+    createDataSetRepo (withRelations: boolean = false): DataSetRepository {
         if (withRelations) {
-            return new DataSetRepository(this.client, this.createUserRepo());
+            return new DataSetRepository(this.client, this.createUserRepo(), this.createImageRepo());
         }
 
         return new DataSetRepository(this.client);
     }
 
-    createImageRepo (withRelations: boolean) {
+    createImageRepo (withRelations: boolean = false): ImageRepository {
         if (withRelations) {
             return new ImageRepository(this.client, this.createDataSetRepo());
         }

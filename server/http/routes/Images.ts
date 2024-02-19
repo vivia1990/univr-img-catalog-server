@@ -4,7 +4,7 @@ import MongoFactory from '../../repositories/factory/mongo/MongoFactory.js';
 import { ObjectId } from 'mongodb';
 import { env } from '../../env.js';
 import { DiskManager, Transmit, TransmitOptions } from '@quicksend/transmit';
-import { mkdir, rename } from 'fs/promises';
+import { mkdir, rename, unlink } from 'fs/promises';
 import osPath from 'node:path';
 import ImageModel, { imgSchema } from '../../models/Image.js';
 import { join as pJoin } from 'path';
@@ -12,6 +12,9 @@ import { ZodError, z } from 'zod';
 
 type Image = PropertiesOnly<ImageModel>;
 type FileUploadRequest = Request<unknown, never, {idDataset: string, total: string}>;
+
+type DelRequest = Request<unknown, unknown, {id: string, path: string}, unknown>;
+type DelResponse = Response<{ success: boolean, message: string, id?: string }>
 
 type GetSearchReq = Request<unknown, unknown, unknown, Partial<Image> & {
     page: string,
@@ -151,6 +154,40 @@ router.post('/upload', upload({ manager, maxFiles: 100 }), (req: FileUploadReque
     repo.insertMany(models).then(data => {
         const meta = repo.getPaginator().buildMetaData(1, 100);
         res.status(201).json({ data: data.inserted, pagination: meta });
+    });
+});
+
+const getRootPath = (path: string):string => {
+    const { pathname } = new URL(path, 'file://');
+    return pathname.split('/').at(1) || '';
+};
+
+const rootPath = getRootPath(env.IMG_STORAGE) + osPath.sep;
+router.delete('/delete', async (req: DelRequest, res: DelResponse) => {
+    const imgId = req.body.id;
+    await repo.deleteById(imgId)
+        .then(success => {
+            if (!success) {
+                res.statusCode = 404;
+                res.json({ success: false, message: 'error' });
+                res.end();
+
+                return;
+            }
+            res.statusCode = 200;
+            res.json({ success: true, message: 'ok', id: imgId });
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusCode = 500;
+            res.json({ success: false, message: 'error' });
+            res.end();
+        });
+
+    const imagePath = req.body.path;
+    await unlink(rootPath + imagePath).catch(error => {
+        console.info('Server: ');
+        console.error(error);
     });
 });
 

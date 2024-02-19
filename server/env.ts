@@ -8,6 +8,6 @@ const schema = z.object({
     DB_PORT: z.string(),
     PORT: z.string(),
     IMG_STORAGE: z.string()
-});
+}).readonly();
 
 export const env = schema.parse(process.env);

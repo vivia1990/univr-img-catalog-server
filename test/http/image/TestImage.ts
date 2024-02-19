@@ -13,8 +13,12 @@ import { createRandomImage } from '../../models/fake/Image.js';
 import { ObjectId } from 'mongodb';
 import { randomBytes } from 'node:crypto';
 import { ImageRecord } from '../../../server/repositories/mongo/ImageRepository.js';
+import { loadImages } from '../../db/seed/DatasetAndImages.js';
+import osPath from 'path';
 
-type GetResponse = Promise<{data: (ImageRecord & {_id: string})[], pagination: RestPaginationMetaData}>;
+type ImageResponse = Omit<ImageRecord, 'dataset'> & {_id: string, dataset: string};
+type GetResponse = Promise<{data: (ImageResponse)[], pagination: RestPaginationMetaData}>;
+type UploadResponse = Promise<{data: (ImageResponse)[], pagination: RestPaginationMetaData}>;
 
 MongoConnection.setConnectionParams({
     name: 'test_image_route',
@@ -112,6 +116,91 @@ test('ImageRoute', async () => {
 
         });
     });
+
+    await it('Delete Request', async t => {
+        await t.test('Delete single image', async () => {
+            const path = new URL('data', import.meta.url);
+            const [imgFile] = await loadImages(path.pathname);
+
+            const idDs = new ObjectId().toString();
+            const form = new FormData();
+            form.append('images', imgFile);
+            form.append('idDataset', idDs);
+            form.append('total', 1);
+
+            const { data } = await fetch(new URL('/image/upload', baseUrl), {
+                method: 'POST',
+                body: form
+            }).then(response => response.json() as UploadResponse);
+
+            assert.equal(data.length, 1);
+            const { _id, path: imPath, dataset } = data.at(0) as ImageResponse;
+            const response = await fetch(new URL('/image/delete', baseUrl), {
+                method: 'DELETE',
+                body: JSON.stringify({ id: _id, path: imPath }),
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                }
+            }).then(res => res.json() as Promise<{ success: boolean, message: string, id?: string }>);
+
+            assert.equal(response.success, true);
+            assert.equal(response.message, 'ok');
+            assert.equal(response.id, _id);
+
+            await new Promise(resolve => {
+                setTimeout(async () => {
+                    const img = await loadImages(env.IMG_STORAGE + osPath.sep + dataset);
+                    assert.equal(img.length, 0);
+                    resolve('');
+                }, 200);
+            });
+
+        });
+
+        await t.test('Delete one image', async () => {
+            const path = new URL('data', import.meta.url);
+            const imgS = await loadImages(path.pathname);
+
+            const idDs = new ObjectId().toString();
+            const form = new FormData();
+            imgS.forEach(image => form.append('images', image));
+            form.append('idDataset', idDs);
+            form.append('total', imgS.length);
+
+            const { data } = await fetch(new URL('/image/upload', baseUrl), {
+                method: 'POST',
+                body: form
+            }).then(response => response.json() as UploadResponse);
+
+            assert.equal(data.length, imgS.length);
+
+            const index = Math.floor((Math.random() * 100)) % data.length;
+
+            const { _id, path: imPath, dataset, name } = data.at(index) as ImageResponse;
+            const response = await fetch(new URL('/image/delete', baseUrl), {
+                method: 'DELETE',
+                body: JSON.stringify({ id: _id, path: imPath }),
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                }
+            }).then(res => res.json() as Promise<{ success: boolean, message: string, id?: string }>);
+
+            assert.equal(response.success, true);
+            assert.equal(response.message, 'ok');
+            assert.equal(response.id, _id);
+
+            await new Promise(resolve => {
+                setTimeout(async () => {
+                    const img = await loadImages(env.IMG_STORAGE + osPath.sep + dataset);
+                    assert.equal(img.length, imgS.length - 1);
+                    assert.equal(img.find(img => img.name === name), undefined);
+                    resolve('');
+                }, 200);
+            });
+
+        });
+    });
+
 }).finally(async () => {
     await MongoConnection.closeConnection();
     server.close();
